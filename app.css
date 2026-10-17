@@ -1,4 +1,4 @@
-/* Exam Clock — shared styles for the display (/) and the phone remote (/kawal/)
+/* AZ=R Countdown — shared styles for the display (/) and the phone remote (/kawal/)
    Layout: landscape screen = 2/3 info column (clock plate · title · notes) + 1/3 countdown panel */
 :root{
   --bg:#f3f0f1; --surface:#ffffff; --ink:#2f272b; --soft:#5d5257; --muted:#857a7f; --line:#ddd5d8;

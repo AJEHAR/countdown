@@ -1,7 +1,7 @@
 /* Teks antara muka / Interface text — en (default) dan ms. {x} = nilai yang diisi. */
 window.I18N={
 en:{
-  appTitle:'Exam Clock',
+  appTitle:'AZ=R Countdown',
   prev:'◀ Previous', next:'Next ▶', startAll:'▶ Start all', pauseAll:'❚❚ Pause all', resetAll:'↺ Reset all',
   phone:'📱 Phone remote', fs:'⛶ Full screen', settings:'✎ Settings',
   pageOf:'Page {a} / {b}', room:'Room {code}', remotes:'{n} remote(s)', connecting:'○ Connecting…', fbFail:'○ Firebase failed: {e}',
@@ -52,7 +52,7 @@ en:{
   snd_loceng:'School bell', snd_dingdong:'Ding-dong', snd_bip:'Three beeps', snd_gong:'Gong', snd_penggera:'Alarm', snd_none:'No sound'
 },
 ms:{
-  appTitle:'Papan Masa Peperiksaan',
+  appTitle:'AZ=R Countdown',
   prev:'◀ Sebelum', next:'Seterusnya ▶', startAll:'▶ Mula semua', pauseAll:'❚❚ Jeda semua', resetAll:'↺ Set semula semua',
   phone:'📱 Kawal dari telefon', fs:'⛶ Skrin penuh', settings:'✎ Tetapan',
   pageOf:'Halaman {a} / {b}', room:'Bilik {code}', remotes:'{n} alat kawalan', connecting:'○ Menyambung…', fbFail:'○ Firebase gagal: {e}',

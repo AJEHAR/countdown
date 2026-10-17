@@ -1,4 +1,4 @@
-/* Exam Clock / Papan Masa Peperiksaan — shared logic for the display (/) and phone remote (/kawal/) */
+/* AZ=R Countdown — shared logic for the display (/) and phone remote (/kawal/) */
 (function(){
 'use strict';
 const MODE=window.APP_MODE==='control'?'control':'display';
@@ -24,7 +24,7 @@ let LANG=lsGet(LANGKEY)==='ms'?'ms':'en';
 function t(k,v){let s=(DICT[LANG]&&DICT[LANG][k])??(DICT.en[k])??k;if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s}
 function applyStatic(){
   document.documentElement.lang=LANG==='ms'?'ms':'en';
-  document.title=MODE==='control'?t('ctlTitle'):t('appTitle');
+  document.title=MODE==='control'?t('appTitle')+' · '+t('ctlTitle'):t('appTitle');
   document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh)});
   document.querySelectorAll('.lang-switch button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
