@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3b3236">
-<title>Alat Kawalan Papan Masa</title>
+<meta name="theme-color" content="#2f272b">
+<title>Remote control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
@@ -13,47 +13,52 @@
 <body>
 <div class="k-wrap">
   <header class="k-top">
-    <h1>Alat Kawalan <span id="k-room" class="k-status"></span></h1>
-    <span class="k-status" id="k-status"></span>
+    <h1><span data-i18n="ctlTitle"></span> <span id="k-room" class="k-status"></span></h1>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="k-status" id="k-status"></span>
+      <span class="lang-switch" role="group" aria-label="Language"><button data-act="lang" data-lang="en">EN</button><button data-act="lang" data-lang="ms">BM</button></span>
+    </div>
   </header>
 
   <form class="k-join" id="k-joinform" hidden>
-    <h2>Sambung ke projektor</h2>
-    <p class="hint">Masukkan kod 6 aksara yang dipaparkan di projektor (butang 📱 Kawal dari telefon).</p>
-    <label for="k-code" class="k-section-title">Kod bilik</label>
+    <h2 data-i18n="joinTitle"></h2>
+    <p class="hint" data-i18n="joinHint"></p>
+    <label for="k-code" class="k-section-title" data-i18n="roomCode"></label>
     <input id="k-code" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" placeholder="ABC123">
-    <button class="btn primary" id="k-joinbtn" type="submit">Sambung</button>
+    <button class="btn primary" id="k-joinbtn" type="submit" data-i18n="connect"></button>
     <p class="msg" id="k-joinmsg" role="status"></p>
   </form>
 
   <main id="k-main" hidden style="display:flex;flex-direction:column;gap:14px">
-    <section class="k-preview" aria-label="Paparan semasa">
+    <section class="k-preview">
       <div class="clock" id="clock"></div>
+      <div class="date" id="date"></div>
       <div class="k-title" id="k-title"></div>
       <div class="k-page" id="k-page"></div>
     </section>
     <div class="k-nav">
-      <button class="btn" data-act="prev" id="b-prev">◀ Sebelum</button>
-      <button class="btn primary" data-act="next" id="b-next">Seterusnya ▶</button>
+      <button class="btn" data-act="prev" id="b-prev" data-i18n="prev"></button>
+      <button class="btn primary" data-act="next" id="b-next" data-i18n="next"></button>
     </div>
-    <h2 class="k-section-title">Countdown</h2>
+    <h2 class="k-section-title" data-i18n="countdowns"></h2>
     <div class="k-timers" id="k-timers"></div>
     <div class="k-all">
-      <button class="btn" data-act="startall">▶ Mula semua</button>
-      <button class="btn" data-act="pauseall">❚❚ Jeda semua</button>
-      <button class="btn danger" data-act="resetall">↺ Set semula semua</button>
+      <button class="btn" data-act="startall" data-i18n="startAll"></button>
+      <button class="btn" data-act="pauseall" data-i18n="pauseAll"></button>
+      <button class="btn danger" data-act="resetall" data-i18n="resetAll"></button>
     </div>
-    <h2 class="k-section-title">Halaman</h2>
+    <h2 class="k-section-title" data-i18n="pages"></h2>
     <div class="chips" id="k-pages"></div>
-    <button class="btn" data-act="edit" style="padding:.9em;font-weight:700">✎ Tetapan &amp; edit kandungan</button>
+    <button class="btn" data-act="edit" style="padding:.9em;font-weight:700" data-i18n="editBtn"></button>
   </main>
 </div>
 
-<aside class="drawer" id="ed" hidden></aside>
+<div class="overlay settings" id="ed" hidden></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="../firebase-config.js"></script>
+<script src="../i18n.js"></script>
 <script>window.APP_MODE='control';</script>
 <script src="../app.js"></script>
 </body>
