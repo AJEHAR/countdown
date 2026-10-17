@@ -1,0 +1,16 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$room": {
+        ".read": "$room.matches(/^[A-Z0-9]{6}$/)",
+        ".write": "$room.matches(/^[A-Z0-9]{6}$/)",
+        "state": { ".validate": "newData.isString() && newData.val().length < 500000" },
+        "ctl": { "$id": { ".validate": "newData.isBoolean()" } },
+        "disp": { "$id": { ".validate": "newData.isBoolean()" } },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

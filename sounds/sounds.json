@@ -1,0 +1,7 @@
+[
+  { "fail": "penggera-digital.mp3", "nama": "Penggera digital" },
+  { "fail": "isyarat.mp3",          "nama": "Isyarat" },
+  { "fail": "hon.mp3",              "nama": "Hon" },
+  { "fail": "siren.mp3",            "nama": "Siren" },
+  { "fail": "penggera-ringkas.mp3", "nama": "Penggera ringkas (3 kali)", "ulang": 3 }
+]

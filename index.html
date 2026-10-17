@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Papan Masa Peperiksaan</title>
+<meta name="description" content="Papan masa peperiksaan: jam live, catatan dan countdown, boleh dikawal dari telefon.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="stage" id="stage"></main>
+
+<nav class="bar" id="bar">
+  <div class="grp">
+    <button class="btn" data-act="prev" id="b-prev" aria-label="Halaman sebelum">◀ Sebelum</button>
+    <button class="btn" data-act="next" id="b-next" aria-label="Halaman seterusnya">Seterusnya ▶</button>
+    <span class="pinfo" id="pinfo"></span>
+    <span class="pinfo" id="conn"></span>
+    <span class="pinfo" id="snd"></span>
+  </div>
+  <div class="grp">
+    <button class="btn" data-act="startall">▶ Mula semua</button>
+    <button class="btn" data-act="pauseall">❚❚ Jeda semua</button>
+    <button class="btn danger" data-act="resetall">↺ Set semula semua</button>
+    <button class="btn" data-act="pair">📱 Kawal dari telefon</button>
+    <button class="btn" data-act="fs">⛶ Skrin penuh</button>
+    <button class="btn primary" data-act="edit">✎ Tetapan</button>
+  </div>
+</nav>
+
+<aside class="drawer" id="ed" hidden></aside>
+
+<div class="overlay" id="pair" hidden>
+  <div class="pair" role="dialog" aria-modal="true" aria-labelledby="pair-h">
+    <h2 id="pair-h">Kawal dari telefon</h2>
+    <div id="pair-body" style="display:contents"></div>
+    <button class="btn" data-act="pair">Tutup</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="firebase-config.js"></script>
+<script>window.APP_MODE='display';</script>
+<script src="app.js"></script>
+</body>
+</html>
