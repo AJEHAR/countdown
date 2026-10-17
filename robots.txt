@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /kawal/
+
+Sitemap: https://countdown.syazr.com/sitemap.xml
