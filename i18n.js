@@ -49,6 +49,14 @@ en:{
   st_wait:'Up next', startsAt:'Starts {t}', modeLbl:'Timing', modeSep:'Separate', modeCont:'Continuous',
   modeHintSep:'Each countdown starts on its own.', modeHintCont:'When one countdown ends, the next one starts automatically, in order.',
   emptyTitle:'No countdowns on this page yet', emptyText:'Add up to 3. They appear in the panel on the right of the display.',
+  help:'? Help', tourStart:'Take the tour', openGuide:'Open the full guide', guideAria:'Open the guide', helpGrp:'Help',
+  tourSkip:'Skip', tourClose:'Close', tourBack:'Back', tourNext:'Next', tourGo:'Show me', tourDone:'Got it',
+  tour1h:'Welcome to AZ=R Countdown', tour1p:'A big clock, notes and up to three countdowns for the exam hall. This short tour shows the five buttons you need.',
+  tour2h:'Set up in Settings', tour2p:'Add a page for each paper with its title, notes and countdowns. Everything saves automatically.',
+  tour3h:'Start the countdowns', tour3p:'Start all starts every countdown on the page. Pause all and Reset all sit next to it. Keyboard: S to start, P to pause.',
+  tour4h:'Control from your phone', tour4p:'Scan the QR code to change pages and start or pause countdowns from anywhere in the hall.',
+  tour5h:'Go full screen', tour5p:'Hides the buttons so candidates see only the clock and countdowns. Move the mouse to bring the buttons back. Keyboard: F.',
+  tour6h:'Help is always here', tour6p:'Replay this tour or open the full step-by-step guide from this button.',
   snd_loceng:'School bell', snd_dingdong:'Ding-dong', snd_bip:'Three beeps', snd_gong:'Gong', snd_penggera:'Alarm', snd_none:'No sound'
 },
 ms:{
@@ -100,5 +108,13 @@ ms:{
   st_wait:'Seterusnya', startsAt:'Mula {t}', modeLbl:'Cara berjalan', modeSep:'Asing-asing', modeCont:'Berterusan',
   modeHintSep:'Setiap countdown dimulakan sendiri.', modeHintCont:'Bila satu countdown tamat, yang seterusnya bermula automatik mengikut turutan.',
   emptyTitle:'Belum ada countdown pada halaman ini', emptyText:'Tambah sehingga 3. Ia dipaparkan dalam panel di sebelah kanan skrin.',
+  help:'? Bantuan', tourStart:'Ikut lawatan berpandu', openGuide:'Buka panduan penuh', guideAria:'Buka panduan', helpGrp:'Bantuan',
+  tourSkip:'Langkau', tourClose:'Tutup', tourBack:'Kembali', tourNext:'Seterusnya', tourGo:'Tunjukkan', tourDone:'Faham',
+  tour1h:'Selamat datang ke AZ=R Countdown', tour1p:'Jam besar, catatan dan sehingga tiga countdown untuk dewan peperiksaan. Lawatan ringkas ini menunjukkan lima butang yang anda perlukan.',
+  tour2h:'Sediakan di Tetapan', tour2p:'Tambah satu halaman untuk setiap kertas, lengkap dengan tajuk, catatan dan countdown. Semuanya disimpan automatik.',
+  tour3h:'Mulakan countdown', tour3p:'Mula semua memulakan setiap countdown pada halaman itu. Jeda semua dan Set semula semua ada di sebelahnya. Papan kekunci: S untuk mula, P untuk jeda.',
+  tour4h:'Kawal dari telefon', tour4p:'Imbas kod QR untuk tukar halaman, mula atau jeda countdown dari mana-mana sudut dewan.',
+  tour5h:'Skrin penuh', tour5p:'Sembunyikan butang supaya calon hanya nampak jam dan countdown. Gerakkan tetikus untuk paparkan semula butang. Papan kekunci: F.',
+  tour6h:'Bantuan sentiasa di sini', tour6p:'Ulang lawatan ini atau buka panduan langkah demi langkah melalui butang ini.',
   snd_loceng:'Loceng sekolah', snd_dingdong:'Ding-dong', snd_bip:'Bip 3 kali', snd_gong:'Gong', snd_penggera:'Penggera', snd_none:'Tiada bunyi'
 }};

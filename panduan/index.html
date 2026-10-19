@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to use AZ=R Countdown</title>
+<meta name="description" content="Step-by-step guide to AZ=R Countdown: set up exam pages and countdowns, connect your phone as a remote, and run the clock in the exam hall. In English and Bahasa Melayu.">
+<link rel="canonical" href="https://countdown.syazr.com/panduan/">
+<meta name="theme-color" content="#a3283a">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AZ=R Countdown">
+<meta property="og:title" content="How to use AZ=R Countdown">
+<meta property="og:description" content="Set up exam countdowns, connect your phone and run the clock in the exam hall. English and Bahasa Melayu.">
+<meta property="og:url" content="https://countdown.syazr.com/panduan/">
+<meta property="og:image" content="https://countdown.syazr.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<script>try{var l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('papanMasa.lang');if(l==='ms')document.documentElement.dataset.lang='ms'}catch(e){}</script>
+<style>
+:root{
+  --bg:#f3f0f1; --surface:#ffffff; --ink:#2f272b; --soft:#5d5257; --muted:#857a7f; --line:#ddd5d8;
+  --plate-bg:#f7e2e5; --plate-ink:#a3283a; --panel:#2a2226; --card:#352c31; --card-run:#4a3d43; --alert:#d61f36;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --ui:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#141115; --surface:#1f1a20; --ink:#efe9eb; --soft:#c9bec3; --muted:#9a8e94; --line:#3a3239;
+  --plate-bg:#3a1a21; --plate-ink:#ff9eaa; --panel:#0c0a0d; --card:#1a161b; --card-run:#2d252c; --alert:#ff4359; color-scheme:dark}}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:17px;line-height:1.6}
+html[data-lang="en"] [data-l="ms"],html[data-lang="ms"] [data-l="en"]{display:none!important}
+a{color:var(--plate-ink)}
+:focus-visible{outline:3px solid var(--plate-ink);outline-offset:2px;border-radius:4px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.top-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;padding-block:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:1.25rem;letter-spacing:.01em}
+.brand img{border-radius:6px}
+.crumb{color:var(--muted);font-weight:700;font-size:.9rem;padding-left:12px;border-left:1px solid var(--line)}
+.spacer{flex:1}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.lang button{border:0;background:transparent;padding:.3em .8em;font:inherit;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.cta{background:var(--ink);color:var(--bg);text-decoration:none;font-weight:700;font-size:.9rem;padding:.5em 1em;border-radius:8px;white-space:nowrap}
+
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;align-items:center;padding-block:48px 40px}
+.hero-text{min-width:0}
+.eyebrow{margin:0 0 8px;font-weight:700;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--plate-ink)}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(2.4rem,5.2vw,4rem);line-height:1;letter-spacing:-.01em;text-wrap:balance}
+.lead{font-size:1.15rem;color:var(--soft);margin:18px 0 0;max-width:46ch}
+.hero-shot{margin:0}
+
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;padding-bottom:64px}
+.toc{position:sticky;top:84px;align-self:start;padding-top:8px}
+.toc-h{margin:0 0 10px;font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;border-left:2px solid var(--line)}
+.toc a{display:block;padding:6px 12px;margin-left:-2px;border-left:2px solid transparent;color:var(--soft);text-decoration:none;font-size:.95rem}
+.toc a:hover{color:var(--ink)}
+.toc a.on{color:var(--plate-ink);border-left-color:var(--plate-ink);font-weight:700}
+
+.doc{min-width:0;max-width:760px}
+.sec{padding-block:8px 40px;border-bottom:1px solid var(--line);margin-bottom:40px}
+.sec:last-child{border-bottom:0}
+.sec>.eyebrow{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--plate-bg);letter-spacing:0;font-size:.9rem;margin-bottom:10px}
+h2{margin:0 0 12px;font-family:var(--display);font-weight:700;font-size:clamp(1.9rem,3.4vw,2.5rem);line-height:1.05;text-wrap:balance}
+h3{margin:36px 0 10px;font-family:var(--display);font-weight:600;font-size:1.5rem;line-height:1.15}
+h4{margin:0 0 6px;font-family:var(--display);font-weight:600;font-size:1.3rem;display:flex;align-items:baseline;gap:8px}
+h4 small{font-family:var(--ui);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 16px;padding-left:1.3em}
+li{margin-bottom:6px}
+li::marker{color:var(--plate-ink);font-weight:700}
+b{font-weight:700}
+
+.steps{list-style:none;padding:0;margin:20px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.steps li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0;display:flex;flex-direction:column;gap:8px}
+.steps li p{margin:0;font-size:.97rem;line-height:1.5}
+.steps .n{font-family:var(--display);font-weight:700;font-size:2.2rem;line-height:1;color:var(--plate-ink)}
+
+.shot{margin:20px 0 24px}
+.shot img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 30px rgba(40,20,30,.08)}
+.shot figcaption{margin-top:8px;font-size:.88rem;color:var(--muted);line-height:1.45}
+.shot.wide img{border-radius:10px}
+.pairfig{display:grid;grid-template-columns:minmax(0,480fr) minmax(0,390fr);gap:16px;align-items:start}
+.pairfig .shot{margin:8px 0 16px}
+
+.callout{border-radius:12px;padding:14px 16px;margin:20px 0;background:var(--surface);border:1px solid var(--line)}
+.callout>b{display:block;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.callout p{margin:0}
+.callout.note{background:var(--plate-bg);border-color:transparent}
+.callout.note>b{color:var(--plate-ink)}
+
+.defs{margin:16px 0 20px;display:grid;gap:0;border-top:1px solid var(--line)}
+.defs div{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+.defs dt{font-weight:700}
+.defs dd{margin:0;color:var(--soft)}
+
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.opt p{margin:0;color:var(--soft);font-size:.97rem}
+
+.states{list-style:none;padding:0;margin:12px 0 20px;display:flex;flex-direction:column;gap:10px}
+.states li{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;align-items:center;margin:0;color:var(--soft)}
+.chip{display:inline-flex;justify-content:center;font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.55em .8em;border-radius:10px;
+  background:var(--card);color:#9e9197;border:2px solid transparent;text-align:center}
+.chip.st-run{background:var(--card-run);color:#fff;border-color:rgba(255,255,255,.14)}
+.chip.st-wait{border:2px dashed rgba(255,255,255,.18)}
+.chip.st-pause{color:#fff}
+.chip.st-done{color:#ff8a97}
+
+.tablewrap{overflow-x:auto;margin:12px 0 8px}
+table.keys{border-collapse:collapse;width:100%;font-size:.97rem}
+.keys th{text-align:left;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:8px 12px;border-bottom:2px solid var(--line)}
+.keys td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.keys td:first-child{white-space:nowrap;width:1%}
+kbd{display:inline-block;min-width:1.9em;text-align:center;font-family:var(--ui);font-size:.85rem;font-weight:700;padding:.15em .5em;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;background:var(--surface);color:var(--ink)}
+
+.faq{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 16px}
+.faq summary{cursor:pointer;font-weight:700;padding:14px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--display);font-size:1.4rem;line-height:1;color:var(--plate-ink);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{color:var(--soft);margin:0 0 16px}
+
+.foot{border-top:1px solid var(--line);background:var(--surface)}
+.foot-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;color:var(--muted);font-size:.9rem;
+  padding-block:20px max(20px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+@media (max-width:1000px){
+  .hero{grid-template-columns:1fr;gap:24px;padding-block:32px 24px}
+  .layout{grid-template-columns:1fr;gap:16px}
+  .toc{position:static;padding:0}
+  .toc ol{flex-direction:row;flex-wrap:wrap;border-left:0;gap:6px}
+  .toc a{border:1px solid var(--line);border-radius:999px;margin:0;padding:5px 12px;background:var(--surface);font-size:.88rem}
+  .toc a.on{border-color:var(--plate-ink)}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  .crumb,.cta{display:none}
+  .compare{grid-template-columns:1fr}
+  .defs div{grid-template-columns:1fr;gap:2px}
+  .states li{grid-template-columns:1fr;gap:6px}
+  .states .chip{justify-self:start}
+  .pairfig{grid-template-columns:1fr 1fr;gap:10px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="../"><img src="../favicon.svg" alt="" width="26" height="26"><span>AZ=R Countdown</span></a>
+    <span class="crumb"><span data-l="en">Guide</span><span data-l="ms">Panduan</span></span>
+    <span class="spacer"></span>
+    <span class="lang" role="group" aria-label="Language"><button type="button" data-set="en">EN</button><button type="button" data-set="ms">BM</button></span>
+    <a class="cta" href="../"><span data-l="en">Open the app</span><span data-l="ms">Buka aplikasi</span></a>
+  </div>
+</header>
+<main class="wrap">
+<section class="hero">
+  <div class="hero-text">
+    <p class="eyebrow"><span data-l="en">User guide</span><span data-l="ms">Panduan pengguna</span></p>
+    <h1><span data-l="en">How to use AZ=R Countdown</span><span data-l="ms">Cara menggunakan AZ=R Countdown</span></h1>
+    <p class="lead" data-l="en">A big live clock, your exam notes and up to three countdowns on the projector, controlled from your phone. This guide takes you from setting up to the end of the exam.</p><p class="lead" data-l="ms">Jam besar, catatan peperiksaan dan sehingga tiga countdown di projektor, dikawal dari telefon anda. Panduan ini membawa anda dari persediaan hingga peperiksaan tamat.</p>
+  </div>
+  <figure class="shot hero-shot"><img data-l="en" src="img/en/display.jpg" alt="AZ=R Countdown display showing 10:30 AM, Mathematics Paper 1 and a countdown at 44:37" loading="lazy" width="1440" height="810"><img data-l="ms" src="img/ms/display.jpg" alt="Paparan AZ=R Countdown menunjukkan 10:30 AM, Matematik Kertas 1 dan countdown 44:37" loading="lazy" width="1440" height="810"><figcaption><span data-l="en">The display during an exam: clock and date on the left, the running countdown on the right.</span><span data-l="ms">Paparan semasa peperiksaan: jam dan tarikh di kiri, countdown yang sedang berjalan di kanan.</span></figcaption></figure>
+</section>
+
+<div class="layout">
+<nav class="toc" aria-label="On this page">
+  <p class="toc-h"><span data-l="en">On this page</span><span data-l="ms">Kandungan</span></p>
+  <ol><li><a href="#start"><span data-l="en">Quick start</span><span data-l="ms">Mula pantas</span></a></li><li><a href="#before"><span data-l="en">Before the exam</span><span data-l="ms">Sebelum peperiksaan</span></a></li><li><a href="#hall"><span data-l="en">In the exam hall</span><span data-l="ms">Di dewan peperiksaan</span></a></li><li><a href="#during"><span data-l="en">During the exam</span><span data-l="ms">Semasa peperiksaan</span></a></li><li><a href="#after"><span data-l="en">After the exam</span><span data-l="ms">Selepas peperiksaan</span></a></li><li><a href="#help"><span data-l="en">Troubleshooting</span><span data-l="ms">Masalah biasa</span></a></li></ol>
+</nav>
+<article class="doc">
+
+<section id="start" class="sec">
+  <h2><span data-l="en">Quick start</span><span data-l="ms">Mula pantas</span></h2>
+  <p data-l="en">Five steps to have the display ready for candidates.</p><p data-l="ms">Lima langkah untuk menyediakan paparan bagi calon.</p>
+  <ol class="steps"><li><span class="n">1</span><p data-l="en">Open <b>countdown.syazr.com</b> on the computer connected to the projector.</p><p data-l="ms">Buka <b>countdown.syazr.com</b> di komputer yang disambung ke projektor.</p></li><li><span class="n">2</span><p data-l="en">Press <b>Settings</b>. Add one page for each paper with its title, notes and countdowns.</p><p data-l="ms">Tekan <b>Tetapan</b>. Tambah satu halaman bagi setiap kertas, lengkap dengan tajuk, catatan dan countdown.</p></li><li><span class="n">3</span><p data-l="en">Press <b>Phone remote</b> and scan the QR code with your phone.</p><p data-l="ms">Tekan <b>Kawal dari telefon</b> dan imbas kod QR dengan telefon anda.</p></li><li><span class="n">4</span><p data-l="en">Press <b>Full screen</b>. This also turns on the sound.</p><p data-l="ms">Tekan <b>Skrin penuh</b>. Ini juga mengaktifkan bunyi.</p></li><li><span class="n">5</span><p data-l="en">When the exam begins, press <b>Start all</b>, on the computer or your phone.</p><p data-l="ms">Bila peperiksaan bermula, tekan <b>Mula semua</b>, di komputer atau telefon.</p></li></ol>
+  <aside class="callout tip"><b><span data-l="en">Tip</span><span data-l="ms">Tip</span></b><p data-l="en">The first time you open the site, a short tour points out these buttons. Replay it any time from <b>? Help</b> → <b>Take the tour</b>.</p><p data-l="ms">Kali pertama anda membuka laman, lawatan ringkas akan menunjukkan butang-butang ini. Ulang bila-bila masa melalui <b>? Bantuan</b> → <b>Ikut lawatan berpandu</b>.</p></aside>
+</section>
+
+<section id="before" class="sec">
+  <p class="eyebrow">1</p>
+  <h2><span data-l="en">Before the exam</span><span data-l="ms">Sebelum peperiksaan</span></h2>
+  <p data-l="en">Set everything up the day before or before candidates enter. Everything you type is saved automatically.</p><p data-l="ms">Sediakan semuanya sehari sebelum atau sebelum calon masuk. Semua yang anda taip disimpan secara automatik.</p>
+
+  <h3 id="sessions"><span data-l="en">Sessions and pages</span><span data-l="ms">Sesi dan halaman</span></h3>
+  <p data-l="en">A <b>session</b> holds one exam event, for example <i>Final Exam 2026</i>. Inside it, add one <b>page</b> for each paper, such as <i>Mathematics Paper 1</i> and <i>Mathematics Paper 2</i>. On the day you move from paper to paper with <b>Next</b>.</p><p data-l="ms">Satu <b>sesi</b> mewakili satu acara peperiksaan, contohnya <i>Peperiksaan Akhir Tahun 2026</i>. Di dalamnya, tambah satu <b>halaman</b> bagi setiap kertas, seperti <i>Matematik Kertas 1</i> dan <i>Matematik Kertas 2</i>. Pada hari peperiksaan, anda bertukar dari kertas ke kertas dengan <b>Seterusnya</b>.</p>
+  <ul data-l="en"><li>Open <b>Settings</b>. The row of pages sits at the top; press <b>+ Page</b> to add one.</li><li>Choose or rename the session at the top right, or in the <b>Session &amp; data</b> tab.</li></ul><ul data-l="ms"><li>Buka <b>Tetapan</b>. Senarai halaman berada di bahagian atas; tekan <b>+ Halaman</b> untuk menambah.</li><li>Pilih atau tukar nama sesi di penjuru kanan atas, atau dalam tab <b>Sesi &amp; data</b>.</li></ul>
+
+  <h3 id="content"><span data-l="en">Title, notes and footer</span><span data-l="ms">Tajuk, catatan dan footer</span></h3>
+  <figure class="shot "><img data-l="en" src="img/en/settings-content.jpg" alt="Settings window on the Content tab" loading="lazy" width="800" height="672"><img data-l="ms" src="img/ms/settings-content.jpg" alt="Tetingkap Tetapan pada tab Kandungan" loading="lazy" width="800" height="672"><figcaption><span data-l="en">Settings → Content: the page title, notes (one item per line), alignment and footer.</span><span data-l="ms">Tetapan → Kandungan: tajuk halaman, catatan (satu maklumat setiap baris), jajaran dan footer.</span></figcaption></figure>
+  <ul data-l="en"><li><b>Title</b> appears large in the middle of the screen, for example <i>MATHEMATICS PAPER 1</i>.</li><li><b>Notes</b> are smaller and grey. Put each item on its own line: the time, the duration, instructions.</li><li><b>Footer</b> is a small line at the bottom, such as the exam name.</li><li>Use <b>Duplicate page</b> to copy a page with all its countdowns, then change only what differs.</li></ul><ul data-l="ms"><li><b>Tajuk</b> dipaparkan besar di tengah skrin, contohnya <i>MATEMATIK KERTAS 1</i>.</li><li><b>Catatan</b> lebih kecil dan berwarna kelabu. Letak setiap maklumat pada baris sendiri: masa, tempoh, arahan.</li><li><b>Footer</b> ialah baris kecil di bahagian bawah, seperti nama peperiksaan.</li><li>Gunakan <b>Salin halaman</b> untuk menyalin halaman berserta countdownnya, kemudian ubah yang berbeza sahaja.</li></ul>
+
+  <h3 id="countdowns"><span data-l="en">Countdowns</span><span data-l="ms">Countdown</span></h3>
+  <p data-l="en">New pages start with no countdowns. In the <b>Countdown</b> tab, press <b>+ Add countdown</b>. Each page can have up to three, shown as equal boxes in the dark panel on the right of the display.</p><p data-l="ms">Halaman baru bermula tanpa countdown. Dalam tab <b>Countdown</b>, tekan <b>+ Tambah countdown</b>. Setiap halaman boleh ada sehingga tiga, dipaparkan sebagai kotak sama saiz dalam panel gelap di sebelah kanan paparan.</p>
+  <figure class="shot "><img data-l="en" src="img/en/settings-countdown.jpg" alt="Countdown tab with three countdowns: label, minutes, blink and sound for each" loading="lazy" width="800" height="712"><img data-l="ms" src="img/ms/settings-countdown.jpg" alt="Tab Countdown dengan tiga countdown: label, minit, berkelip dan bunyi bagi setiap satu" loading="lazy" width="800" height="712"><figcaption><span data-l="en">Settings → Countdown with three countdowns and Continuous timing.</span><span data-l="ms">Tetapan → Countdown dengan tiga countdown dan mod Berterusan.</span></figcaption></figure>
+  <dl class="defs">
+    <div><dt><span data-l="en">Label</span><span data-l="ms">Label</span></dt><dd><span data-l="en">The name above the time, for example <i>Section A</i> or <i>Collect papers</i>.</span><span data-l="ms">Nama di atas masa, contohnya <i>Bahagian A</i> atau <i>Kumpul kertas</i>.</span></dd></div>
+    <div><dt><span data-l="en">Duration</span><span data-l="ms">Tempoh</span></dt><dd><span data-l="en">Length in minutes. Times over an hour show as 1:15:00.</span><span data-l="ms">Panjang dalam minit. Lebih sejam dipaparkan sebagai 1:15:00.</span></dd></div>
+    <div><dt><span data-l="en">Blink 3 times</span><span data-l="ms">Berkelip 3 kali</span></dt><dd><span data-l="en">The box flashes red three times when the minutes you choose are left, and again when time is up. Set 0 to flash only at the end.</span><span data-l="ms">Kotak berkelip merah tiga kali bila tinggal minit yang anda pilih, dan sekali lagi bila masa tamat. Letak 0 untuk berkelip hanya bila tamat.</span></dd></div>
+    <div><dt><span data-l="en">Sound</span><span data-l="ms">Bunyi</span></dt><dd><span data-l="en">Plays once on the display when time is up. Press <b>▶ Test</b> to hear it first, or choose <i>No sound</i>.</span><span data-l="ms">Dimainkan sekali di paparan bila masa tamat. Tekan <b>▶ Uji</b> untuk mendengarnya dahulu, atau pilih <i>Tiada bunyi</i>.</span></dd></div>
+  </dl>
+
+  <h3 id="timing"><span data-l="en">Separate or Continuous</span><span data-l="ms">Asing-asing atau Berterusan</span></h3>
+  <p data-l="en">With two or more countdowns, choose how they run with <b>Timing</b>:</p><p data-l="ms">Bila ada dua atau lebih countdown, pilih cara ia berjalan melalui <b>Cara berjalan</b>:</p>
+  <div class="compare">
+    <div class="opt"><h4><span data-l="en">Separate</span><span data-l="ms">Asing-asing</span><small><span data-l="en">default</span><span data-l="ms">default</span></small></h4>
+      <p data-l="en">Each countdown runs on its own. Use it when sections start at the same time, or when you want to start each one yourself.</p><p data-l="ms">Setiap countdown berjalan sendiri. Sesuai bila semua bahagian bermula serentak, atau bila anda mahu memulakan setiap satu sendiri.</p></div>
+    <div class="opt"><h4><span data-l="en">Continuous</span><span data-l="ms">Berterusan</span></h4>
+      <p data-l="en">When one ends, the next starts straight away, in order. Press <b>Start all</b> once and the whole paper runs by itself.</p><p data-l="ms">Bila satu tamat, yang seterusnya bermula serta-merta mengikut turutan. Tekan <b>Mula semua</b> sekali dan seluruh kertas berjalan sendiri.</p></div>
+  </div>
+  <figure class="shot "><img data-l="en" src="img/en/continuous.jpg" alt="Display with Section A running and two countdowns waiting with their start times" loading="lazy" width="1440" height="810"><img data-l="ms" src="img/ms/continuous.jpg" alt="Paparan dengan Bahagian A berjalan dan dua countdown menunggu dengan masa mula" loading="lazy" width="1440" height="810"><figcaption><span data-l="en">Continuous timing on the display: Section A is running, the others show when they will start.</span><span data-l="ms">Mod Berterusan di paparan: Bahagian A sedang berjalan, yang lain menunjukkan bila ia akan bermula.</span></figcaption></figure>
+
+  <h3 id="display-options"><span data-l="en">Display options</span><span data-l="ms">Pilihan paparan</span></h3>
+  <figure class="shot "><img data-l="en" src="img/en/settings-display.jpg" alt="Display tab of the settings window" loading="lazy" width="800" height="453"><img data-l="ms" src="img/ms/settings-display.jpg" alt="Tab Paparan dalam tetingkap Tetapan" loading="lazy" width="800" height="453"><figcaption><span data-l="en">Settings → Display: language, 12 or 24-hour clock, seconds, date and text size.</span><span data-l="ms">Tetapan → Paparan: bahasa, jam 12 atau 24 jam, saat, tarikh dan saiz teks.</span></figcaption></figure>
+  <p data-l="en"><b>Text size</b> makes everything larger or smaller together. Raise it for a big hall; lower it when titles or notes are long.</p><p data-l="ms"><b>Saiz teks</b> membesarkan atau mengecilkan semua teks serentak. Naikkan untuk dewan besar; turunkan jika tajuk atau catatan panjang.</p>
+</section>
+
+<section id="hall" class="sec">
+  <p class="eyebrow">2</p>
+  <h2><span data-l="en">In the exam hall</span><span data-l="ms">Di dewan peperiksaan</span></h2>
+  <ol data-l="en"><li>Open <b>countdown.syazr.com</b> on the computer connected to the projector. Your sessions are already there.</li><li>Go to the first paper with <b>Previous</b> and <b>Next</b>, or by choosing it in Settings.</li><li>Turn off the computer's sleep and screen saver.</li></ol><ol data-l="ms"><li>Buka <b>countdown.syazr.com</b> di komputer yang disambung ke projektor. Sesi anda sudah sedia ada.</li><li>Pergi ke kertas pertama dengan <b>Sebelum</b> dan <b>Seterusnya</b>, atau dengan memilihnya dalam Tetapan.</li><li>Matikan mod tidur dan penyelamat skrin komputer.</li></ol>
+
+  <h3 id="phone"><span data-l="en">Connect your phone</span><span data-l="ms">Sambung telefon anda</span></h3>
+  <p data-l="en">With your phone you can change pages and start or pause countdowns from anywhere in the hall.</p><p data-l="ms">Dengan telefon, anda boleh tukar halaman dan mula atau jeda countdown dari mana-mana sudut dewan.</p>
+  <ol data-l="en"><li>On the display, press <b>Phone remote</b>. A QR code and a 6-character room code appear.</li><li>Scan the QR code with your phone camera. Or open <b>countdown.syazr.com/kawal</b> and type the code.</li><li>The QR window closes by itself once your phone connects. Your phone shows <b>● Display connected</b>.</li></ol><ol data-l="ms"><li>Di paparan, tekan <b>Kawal dari telefon</b>. Kod QR dan kod bilik 6 aksara akan muncul.</li><li>Imbas kod QR dengan kamera telefon. Atau buka <b>countdown.syazr.com/kawal</b> dan taip kodnya.</li><li>Tetingkap QR tertutup sendiri bila telefon bersambung. Telefon akan menunjukkan <b>● Projektor bersambung</b>.</li></ol>
+  <div class="pairfig">
+    <figure class="shot "><img data-l="en" src="img/en/pair.jpg" alt="QR code and room code K7MPXA" loading="lazy" width="480" height="581"><img data-l="ms" src="img/ms/pair.jpg" alt="Kod QR dan kod bilik K7MPXA" loading="lazy" width="480" height="581"><figcaption><span data-l="en">The code shown on the display.</span><span data-l="ms">Kod yang dipaparkan di skrin.</span></figcaption></figure>
+    <figure class="shot "><img data-l="en" src="img/en/phone.jpg" alt="Phone remote with clock, Previous and Next buttons and countdown controls" loading="lazy" width="390" height="760"><img data-l="ms" src="img/ms/phone.jpg" alt="Alat kawalan telefon dengan jam, butang Sebelum dan Seterusnya, dan kawalan countdown" loading="lazy" width="390" height="760"><figcaption><span data-l="en">The remote on your phone.</span><span data-l="ms">Alat kawalan di telefon.</span></figcaption></figure>
+  </div>
+  <aside class="callout tip"><b><span data-l="en">Tip</span><span data-l="ms">Tip</span></b><p data-l="en">Several phones can join the same room, for example the chief invigilator and an assistant.</p><p data-l="ms">Beberapa telefon boleh masuk ke bilik yang sama, contohnya ketua pengawas dan pembantu.</p></aside>
+
+  <h3 id="sound"><span data-l="en">Sound and full screen</span><span data-l="ms">Bunyi dan skrin penuh</span></h3>
+  <p data-l="en">Press <b>Full screen</b> on the display computer. The buttons hide so candidates see only the clock and countdowns. Move the mouse to bring them back for a few seconds. Pressing Full screen also turns on the sound: browsers block sound until the page is clicked once.</p><p data-l="ms">Tekan <b>Skrin penuh</b> di komputer paparan. Butang disembunyikan supaya calon hanya nampak jam dan countdown. Gerakkan tetikus untuk paparkan semula butang selama beberapa saat. Menekan Skrin penuh juga mengaktifkan bunyi: browser menyekat bunyi sehingga halaman diklik sekali.</p>
+  <aside class="callout note"><b><span data-l="en">Important</span><span data-l="ms">Penting</span></b><p data-l="en">Check that the bottom bar shows <b>🔊 Sound on</b> before candidates arrive.</p><p data-l="ms">Pastikan bar bawah menunjukkan <b>🔊 Bunyi aktif</b> sebelum calon tiba.</p></aside>
+</section>
+
+<section id="during" class="sec">
+  <p class="eyebrow">3</p>
+  <h2><span data-l="en">During the exam</span><span data-l="ms">Semasa peperiksaan</span></h2>
+  <figure class="shot wide"><img data-l="en" src="img/en/bar.jpg" alt="Bottom bar: Previous, Next, Start all, Pause all, Reset all, Phone remote, Help, Full screen, Settings" loading="lazy" width="1424" height="104"><img data-l="ms" src="img/ms/bar.jpg" alt="Bar bawah: Sebelum, Seterusnya, Mula semua, Jeda semua, Set semula semua, Kawal dari telefon, Bantuan, Skrin penuh, Tetapan" loading="lazy" width="1424" height="104"><figcaption><span data-l="en">The buttons at the bottom of the display.</span><span data-l="ms">Butang di bahagian bawah paparan.</span></figcaption></figure>
+  <dl class="defs">
+    <div><dt><span data-l="en">Start all</span><span data-l="ms">Mula semua</span></dt><dd><span data-l="en">Starts every countdown on the page, or resumes paused ones.</span><span data-l="ms">Memulakan setiap countdown pada halaman, atau menyambung yang dijeda.</span></dd></div>
+    <div><dt><span data-l="en">Pause all</span><span data-l="ms">Jeda semua</span></dt><dd><span data-l="en">Stops the countdowns and keeps the time left, for example during a power cut.</span><span data-l="ms">Menghentikan countdown dan menyimpan baki masa, contohnya semasa bekalan elektrik terputus.</span></dd></div>
+    <div><dt><span data-l="en">Reset all</span><span data-l="ms">Set semula semua</span></dt><dd><span data-l="en">Puts every countdown back to its full time. Press twice to confirm, so it is never pressed by mistake.</span><span data-l="ms">Mengembalikan setiap countdown ke tempoh penuh. Tekan dua kali untuk sahkan, supaya tidak tertekan secara tidak sengaja.</span></dd></div>
+    <div><dt><span data-l="en">Previous / Next</span><span data-l="ms">Sebelum / Seterusnya</span></dt><dd><span data-l="en">Moves between papers. Countdowns on other pages keep running.</span><span data-l="ms">Bertukar antara kertas. Countdown pada halaman lain terus berjalan.</span></dd></div>
+  </dl>
+  <p data-l="en">On your phone, each countdown also has its own <b>Start</b>, <b>Pause</b> and <b>Reset</b> buttons.</p><p data-l="ms">Di telefon, setiap countdown juga ada butang <b>Mula</b>, <b>Jeda</b> dan <b>Set semula</b> tersendiri.</p>
+
+  <h3 id="states"><span data-l="en">What the countdown boxes show</span><span data-l="ms">Maksud paparan kotak countdown</span></h3>
+  <ul class="states"><li><span class="chip st-ready"><span data-l="en">Ready</span><span data-l="ms">Sedia</span></span><span data-l="en">Set up but not started. Shown dimmed.</span><span data-l="ms">Sudah disediakan tetapi belum dimulakan. Dipaparkan pudar.</span></li><li><span class="chip st-run"><span data-l="en">Ends 11:14 AM</span><span data-l="ms">Tamat 11:14 AM</span></span><span data-l="en">Running. The brightest card, with the exact time it ends.</span><span data-l="ms">Sedang berjalan. Kad paling terang, dengan masa tamat yang tepat.</span></li><li><span class="chip st-wait"><span data-l="en">Starts 10:42 AM</span><span data-l="ms">Mula 10:42 AM</span></span><span data-l="en">Continuous timing only: waiting for the one before it to finish.</span><span data-l="ms">Mod Berterusan sahaja: menunggu countdown sebelumnya tamat.</span></li><li><span class="chip st-pause"><span data-l="en">Paused</span><span data-l="ms">Dijeda</span></span><span data-l="en">Stopped part-way. Press Start all to carry on from where it stopped.</span><span data-l="ms">Dihentikan sementara. Tekan Mula semua untuk sambung dari baki masa.</span></li><li><span class="chip st-done"><span data-l="en">Time's up</span><span data-l="ms">Masa tamat</span></span><span data-l="en">Finished. The digits turn red and stay at 00:00.</span><span data-l="ms">Sudah tamat. Angka bertukar merah dan kekal 00:00.</span></li></ul>
+
+  <h3 id="keys"><span data-l="en">Keyboard shortcuts</span><span data-l="ms">Pintasan papan kekunci</span></h3>
+  <p data-l="en">Handy when the display is in full screen. A presentation clicker also works: its next and back buttons change pages.</p><p data-l="ms">Berguna semasa paparan dalam skrin penuh. Alat klik pembentangan juga boleh digunakan: butang next dan back menukar halaman.</p>
+  <div class="tablewrap"><table class="keys">
+    <thead><tr><th><span data-l="en">Key</span><span data-l="ms">Kekunci</span></th><th><span data-l="en">What it does</span><span data-l="ms">Fungsi</span></th></tr></thead>
+    <tbody><tr><td><kbd>→</kbd> <kbd>Page Down</kbd></td><td><span data-l="en">Next page</span><span data-l="ms">Halaman seterusnya</span></td></tr><tr><td><kbd>←</kbd> <kbd>Page Up</kbd></td><td><span data-l="en">Previous page</span><span data-l="ms">Halaman sebelum</span></td></tr><tr><td><kbd>S</kbd></td><td><span data-l="en">Start or resume all countdowns</span><span data-l="ms">Mula atau sambung semua countdown</span></td></tr><tr><td><kbd>P</kbd></td><td><span data-l="en">Pause all countdowns</span><span data-l="ms">Jeda semua countdown</span></td></tr><tr><td><kbd>F</kbd></td><td><span data-l="en">Full screen on or off</span><span data-l="ms">Skrin penuh hidup atau mati</span></td></tr><tr><td><kbd>E</kbd></td><td><span data-l="en">Open or close Settings</span><span data-l="ms">Buka atau tutup Tetapan</span></td></tr><tr><td><kbd>Esc</kbd></td><td><span data-l="en">Close a window, or leave full screen</span><span data-l="ms">Tutup tetingkap, atau keluar dari skrin penuh</span></td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="after" class="sec">
+  <p class="eyebrow">4</p>
+  <h2><span data-l="en">After the exam</span><span data-l="ms">Selepas peperiksaan</span></h2>
+  <ul data-l="en"><li><b>Reset all</b> puts the countdowns back to their full time, ready for the next group.</li><li>For the next exam, open Settings → Session &amp; data and press <b>Duplicate session</b>, then change the titles and times. Or press <b>+ New session</b> to start blank.</li><li>To keep a copy, press <b>Generate code</b>, then <b>Copy code</b>, and save the text somewhere safe. Paste it into <b>Import</b> to bring the sessions back later or on another computer.</li></ul><ul data-l="ms"><li><b>Set semula semua</b> mengembalikan countdown ke tempoh penuh, sedia untuk kumpulan seterusnya.</li><li>Untuk peperiksaan seterusnya, buka Tetapan → Sesi &amp; data dan tekan <b>Salin sesi</b>, kemudian ubah tajuk dan masa. Atau tekan <b>+ Sesi baru</b> untuk bermula kosong.</li><li>Untuk simpanan, tekan <b>Jana kod</b>, kemudian <b>Salin kod</b>, dan simpan teks itu di tempat selamat. Tampal di bahagian <b>Import</b> untuk mengembalikan sesi kemudian atau di komputer lain.</li></ul>
+  <figure class="shot "><img data-l="en" src="img/en/settings-data.jpg" alt="Session and data tab with session buttons, room code and backup section" loading="lazy" width="800" height="752"><img data-l="ms" src="img/ms/settings-data.jpg" alt="Tab Sesi dan data dengan butang sesi, kod bilik dan bahagian simpanan" loading="lazy" width="800" height="752"><figcaption><span data-l="en">Settings → Session &amp; data: sessions, phone room and backup code.</span><span data-l="ms">Tetapan → Sesi &amp; data: sesi, bilik telefon dan kod simpanan.</span></figcaption></figure>
+</section>
+
+<section id="help" class="sec">
+  <h2><span data-l="en">Troubleshooting</span><span data-l="ms">Masalah biasa</span></h2>
+  <div class="faq"><details><summary><span data-l="en">There's no sound when time is up</span><span data-l="ms">Tiada bunyi bila masa tamat</span></summary><p data-l="en">Browsers only allow sound after someone clicks the page. Click anywhere on the display once, or press <b>Full screen</b>. The bottom bar then shows <b>🔊 Sound on</b>. Check the computer volume and the projector speaker too, and use <b>▶ Test</b> in Settings → Countdown to try each sound.</p><p data-l="ms">Browser hanya membenarkan bunyi selepas halaman diklik. Klik di mana-mana pada paparan sekali, atau tekan <b>Skrin penuh</b>. Bar bawah akan menunjukkan <b>🔊 Bunyi aktif</b>. Semak juga kelantangan komputer dan pembesar suara projektor, dan gunakan <b>▶ Uji</b> di Tetapan → Countdown untuk mencuba setiap bunyi.</p></details><details><summary><span data-l="en">My phone says the room was not found</span><span data-l="ms">Telefon menunjukkan bilik tidak dijumpai</span></summary><p data-l="en">The display must be open first, because it creates the room. Check that the 6-character code on your phone matches the code on the display. If you switched to a new room, scan the new QR code.</p><p data-l="ms">Paparan mesti dibuka dahulu kerana ia yang mencipta bilik. Pastikan kod 6 aksara di telefon sama dengan kod di paparan. Kalau anda telah menukar ke bilik baru, imbas kod QR yang baru.</p></details><details><summary><span data-l="en">I refreshed the page or closed the tab by accident</span><span data-l="ms">Saya tertekan refresh atau tertutup tab</span></summary><p data-l="en">Open the site again on the same computer. Everything comes back as it was: the same page, the same room, and countdowns still running with the correct time left. Phones stay connected.</p><p data-l="ms">Buka semula laman di komputer yang sama. Semuanya kembali seperti tadi: halaman yang sama, bilik yang sama, dan countdown terus berjalan dengan baki masa yang betul. Telefon kekal bersambung.</p></details><details><summary><span data-l="en">I want to run the same session on another computer</span><span data-l="ms">Saya mahu guna sesi yang sama di komputer lain</span></summary><p data-l="en">On the new computer, open <b>countdown.syazr.com/?r=CODE</b>, replacing CODE with your 6-character room code. That computer joins your room and shows the same sessions. To copy sessions without sharing a room, use <b>Generate code</b> and <b>Import sessions</b> in Settings → Session &amp; data.</p><p data-l="ms">Di komputer baru, buka <b>countdown.syazr.com/?r=KOD</b>, gantikan KOD dengan kod bilik 6 aksara anda. Komputer itu akan masuk ke bilik anda dan memaparkan sesi yang sama. Untuk menyalin sesi tanpa berkongsi bilik, gunakan <b>Jana kod</b> dan <b>Import sesi</b> di Tetapan → Sesi &amp; data.</p></details><details><summary><span data-l="en">Someone else is changing my screen</span><span data-l="ms">Orang lain mengubah paparan saya</span></summary><p data-l="en">Anyone with your room code can control the display. Open Settings → Session &amp; data and press <b>Switch to a new room</b>. Then reconnect your own phone with the new QR code.</p><p data-l="ms">Sesiapa yang tahu kod bilik anda boleh mengawal paparan. Buka Tetapan → Sesi &amp; data dan tekan <b>Tukar ke bilik baru</b>. Kemudian sambung semula telefon anda dengan kod QR yang baru.</p></details><details><summary><span data-l="en">The clock shows the wrong time</span><span data-l="ms">Jam menunjukkan masa yang salah</span></summary><p data-l="en">The clock follows internet server time, not just the computer's own clock, so small errors are corrected automatically. If the hour is wrong, check the computer's time zone is set to Kuala Lumpur (UTC+8).</p><p data-l="ms">Jam mengikut masa pelayan internet, bukan hanya jam komputer, jadi ralat kecil dibetulkan secara automatik. Kalau jam salah sejam atau lebih, semak zon waktu komputer ditetapkan kepada Kuala Lumpur (UTC+8).</p></details><details><summary><span data-l="en">The screen goes dark during the exam</span><span data-l="ms">Skrin menjadi gelap semasa peperiksaan</span></summary><p data-l="en">Full screen asks the computer to stay awake, but some computers ignore it. Before the exam, turn off sleep and the screen saver in the computer's power settings.</p><p data-l="ms">Skrin penuh meminta komputer kekal aktif, tetapi sesetengah komputer mengabaikannya. Sebelum peperiksaan, matikan mod tidur (sleep) dan penyelamat skrin dalam tetapan kuasa komputer.</p></details></div>
+</section>
+
+</article>
+</div>
+</main>
+<footer class="foot"><div class="foot-in">
+  <a class="brand" href="../"><img src="../favicon.svg" alt="" width="22" height="22"><span>AZ=R Countdown</span></a>
+  <span>countdown.syazr.com</span>
+  <a href="../"><span data-l="en">Open the app</span><span data-l="ms">Buka aplikasi</span> →</a>
+</div></footer>
+<script>
+(function(){
+  var KEY='papanMasa.lang',root=document.documentElement;
+  function get(){try{var q=new URLSearchParams(location.search).get('lang');if(q==='ms'||q==='en')return q;return localStorage.getItem(KEY)==='ms'?'ms':'en'}catch(e){return 'en'}}
+  function set(l){root.dataset.lang=l;root.lang=l==='ms'?'ms':'en';
+    document.title=l==='ms'?'Cara menggunakan AZ=R Countdown':'How to use AZ=R Countdown';
+    document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.set===l)});
+    try{localStorage.setItem(KEY,l)}catch(e){}}
+  set(get());
+  document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.set)})});
+  var links=[].slice.call(document.querySelectorAll('.toc a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+      links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-30% 0px -60% 0px'});
+    document.querySelectorAll('.sec').forEach(function(s){io.observe(s)});
+  }
+  if(location.hash==='#phone'){var d=document.getElementById('phone');if(d)setTimeout(function(){d.scrollIntoView()},50)}
+})();
+</script>
+</body>
+</html>

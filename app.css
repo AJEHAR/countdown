@@ -5,7 +5,7 @@
   --plate-bg:#f7e2e5; --plate-ink:#a3283a; --plate-sub:#8a4a55;
   --panel:#2a2226; --card:#352c31; --card-run:#4a3d43; --panel-ink:#ffffff; --panel-muted:#9e9197; --panel-line:rgba(255,255,255,.14);
   --alert:#d61f36; --alert-soft:#ff8a97; --on-alert:#ffffff; --ok:#23864f;
-  --scrim:rgba(24,18,22,.38); --qr-bg:#ffffff; --accent:#a3283a;
+  --scrim:rgba(24,18,22,.38); --tour-scrim:rgba(24,18,22,.58); --qr-bg:#ffffff; --accent:#a3283a;
   --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --ui:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
   --scale:1;
@@ -15,7 +15,7 @@
   --bg:#141115; --surface:#1f1a20; --ink:#efe9eb; --soft:#c9bec3; --muted:#9a8e94; --line:#3a3239;
   --plate-bg:#3a1a21; --plate-ink:#ff9eaa; --plate-sub:#d99aa4;
   --panel:#0c0a0d; --card:#1a161b; --card-run:#2d252c; --panel-line:rgba(255,255,255,.12);
-  --alert:#ff4359; --scrim:rgba(0,0,0,.55); --accent:#ff9eaa; --ok:#4cc985; color-scheme:dark}}
+  --alert:#ff4359; --scrim:rgba(0,0,0,.55); --tour-scrim:rgba(0,0,0,.72); --accent:#ff9eaa; --ok:#4cc985; color-scheme:dark}}
 
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
@@ -209,3 +209,35 @@ body.mode-control{display:block;height:auto;min-height:100%}
 .lang-switch{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:.78rem}
 .lang-switch button{border:0;background:transparent;padding:.3em .7em;cursor:pointer;color:var(--muted);font-weight:700}
 .lang-switch button.on{background:var(--ink);color:var(--bg)}
+
+/* ================= Help menu + guided tour ================= */
+a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+a.btn.primary{color:var(--bg)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line)}
+.help-wrap{position:relative;display:inline-flex}
+.help-pop{position:absolute;bottom:calc(100% + 8px);right:0;z-index:16;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;min-width:220px}
+.hp-item{display:block;text-align:left;border:0;background:transparent;padding:.65em .85em;border-radius:8px;cursor:pointer;color:var(--ink);
+  text-decoration:none;font-size:.92rem;white-space:nowrap;font-weight:700}
+.hp-item:hover,.hp-item:focus-visible{background:var(--bg)}
+.tour-veil{position:fixed;inset:0;z-index:40}
+.tour-spot{position:fixed;z-index:41;border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px var(--tour-scrim);
+  outline:2px solid var(--plate-ink);outline-offset:3px;transition:left .3s cubic-bezier(.2,.8,.2,1),top .3s cubic-bezier(.2,.8,.2,1),width .3s cubic-bezier(.2,.8,.2,1),height .3s cubic-bezier(.2,.8,.2,1)}
+.tour-spot.center{left:50%;top:50%;width:0;height:0;outline-color:transparent}
+.tour-card{position:fixed;z-index:42;width:min(380px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border-radius:16px;
+  padding:18px 18px 14px;box-shadow:0 20px 56px rgba(0,0,0,.32);display:flex;flex-direction:column;gap:8px;
+  transition:left .3s cubic-bezier(.2,.8,.2,1),top .3s cubic-bezier(.2,.8,.2,1);animation:tourIn .22s ease}
+@keyframes tourIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tour-card h2{margin:0;font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.1;text-wrap:balance}
+.tour-card p{margin:0;color:var(--soft);line-height:1.5;font-size:.95rem}
+.tc-step{font-size:.75rem;font-weight:700;letter-spacing:.12em;color:var(--plate-ink)}
+.tc-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.tc-right{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.tour-card.arrow-down::after,.tour-card.arrow-up::after{content:"";position:absolute;left:calc(var(--ax,50%) - 8px);width:16px;height:16px;
+  background:var(--surface);transform:rotate(45deg);border-radius:2px}
+.tour-card.arrow-down::after{bottom:-7px}
+.tour-card.arrow-up::after{top:-7px}
+@media (prefers-reduced-motion: reduce){.tour-spot,.tour-card{transition:none;animation:none}}
+.k-help{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;text-decoration:none;color:var(--muted);font-weight:700;background:var(--surface)}
+.k-help:hover{color:var(--ink);border-color:var(--muted)}

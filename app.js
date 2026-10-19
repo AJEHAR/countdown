@@ -27,9 +27,10 @@ function applyStatic(){
   document.title=MODE==='control'?t('appTitle')+' · '+t('ctlTitle'):t('appTitle');
   document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh)});
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{el.setAttribute('aria-label',t(el.dataset.i18nAria))});
   document.querySelectorAll('.lang-switch button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
 }
-function setLang(l){LANG=l==='ms'?'ms':'en';lsSet(LANGKEY,LANG);dateFmt=null;applyStatic();renderStage();if(settingsOpen())renderEditor();updConn();if(!$('pair')||$('pair').hidden)return;openPair()}
+function setLang(l){LANG=l==='ms'?'ms':'en';lsSet(LANGKEY,LANG);dateFmt=null;applyStatic();renderStage();if(settingsOpen())renderEditor();if(tourOpen())renderTour();updConn();if(!$('pair')||$('pair').hidden)return;openPair()}
 
 /* ---------- Data ---------- */
 const timer=(label,min,alert=true,alertMin=5,sound='loceng')=>({id:uid(),label,min,alert,alertMin,sound});
@@ -324,6 +325,80 @@ function openPair(){
 function openSettings(){renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
 function toggleSettings(){settingsOpen()?closeOverlay('ed'):openSettings()}
 
+
+/* ---------- Guided tour (display only) ----------
+   Shown once on a device's first visit; replay from Help. Spotlights one real button per step. */
+const TOURKEY='papanMasa.tour.v1';
+const TOUR=[
+  {sel:null,h:'tour1h',p:'tour1p'},
+  {sel:'#bar [data-act="edit"]',h:'tour2h',p:'tour2p'},
+  {sel:'#bar [data-act="startall"]',h:'tour3h',p:'tour3p'},
+  {sel:'#bar [data-act="pair"]',h:'tour4h',p:'tour4p'},
+  {sel:'#bar [data-act="fs"]',h:'tour5h',p:'tour5p'},
+  {sel:'#b-help',h:'tour6h',p:'tour6p'}
+];
+let tourI=-1,tourEls=null;
+function tourOpen(){return tourI>=0}
+function helpOpen(){const p=$('help-pop');return !!p&&!p.hidden}
+function closeHelp(){const p=$('help-pop');if(!p||p.hidden)return;p.hidden=true;$('b-help').setAttribute('aria-expanded','false')}
+function toggleHelp(){const p=$('help-pop');if(!p)return;if(p.hidden){p.hidden=false;$('b-help').setAttribute('aria-expanded','true');const f=p.querySelector('.hp-item');if(f)f.focus()}else closeHelp()}
+function startTour(){
+  if(MODE!=='display')return;
+  closeHelp();if(settingsOpen())closeOverlay('ed');if($('pair')&&!$('pair').hidden)closeOverlay('pair');
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  if(document.body.classList.contains('present'))setPresent(false);
+  if(!tourEls){
+    const veil=document.createElement('div');veil.className='tour-veil';
+    const spot=document.createElement('div');spot.className='tour-spot center';
+    const card=document.createElement('div');card.className='tour-card';
+    card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-labelledby','tour-h');card.setAttribute('aria-describedby','tour-p');
+    document.body.append(veil,spot,card);tourEls={veil,spot,card};
+  }
+  tourEls.veil.hidden=tourEls.spot.hidden=tourEls.card.hidden=false;
+  tourI=0;renderTour();
+}
+function renderTour(){
+  const s=TOUR[tourI],last=tourI===TOUR.length-1,card=tourEls.card;
+  card.innerHTML=`<div class="tc-step">${tourI+1} / ${TOUR.length}</div>
+    <h2 id="tour-h">${esc(t(s.h))}</h2><p id="tour-p">${esc(t(s.p))}</p>
+    <div class="tc-actions">
+      <button class="btn small ghost" data-act="tourend">${esc(t(last?'tourClose':'tourSkip'))}</button>
+      <span class="tc-right">
+        ${tourI>0?`<button class="btn small" data-act="tourprev">${esc(t('tourBack'))}</button>`:''}
+        ${last?`<a class="btn small" href="panduan/" target="_blank" rel="noopener">${esc(t('openGuide'))}</a>`:''}
+        <button class="btn small primary" data-act="${last?'tourend':'tournext'}">${esc(t(last?'tourDone':(tourI===0?'tourGo':'tourNext')))}</button>
+      </span>
+    </div>`;
+  placeTour();
+  const f=card.querySelector('.btn.primary');if(f)f.focus({preventScroll:true});
+}
+function placeTour(){
+  if(!tourOpen())return;
+  const {spot,card}=tourEls,s=TOUR[tourI],vw=innerWidth,vh=innerHeight;
+  const el=s.sel&&document.querySelector(s.sel);
+  const r=el&&el.getClientRects().length?el.getBoundingClientRect():null;
+  const cw=card.offsetWidth,ch=card.offsetHeight;
+  card.classList.remove('arrow-up','arrow-down');
+  if(!r){spot.classList.add('center');spot.removeAttribute('style');
+    card.style.left=Math.max(16,(vw-cw)/2)+'px';card.style.top=Math.max(16,(vh-ch)/2)+'px';return}
+  spot.classList.remove('center');
+  const pad=6,gap=16;
+  Object.assign(spot.style,{left:(r.left-pad)+'px',top:(r.top-pad)+'px',width:(r.width+pad*2)+'px',height:(r.height+pad*2)+'px'});
+  const left=Math.min(vw-cw-16,Math.max(16,r.left+r.width/2-cw/2));
+  let top=r.top-pad-gap-ch,below=false;
+  if(top<16){top=Math.min(vh-ch-16,r.bottom+pad+gap);below=true}
+  card.style.left=left+'px';card.style.top=top+'px';
+  card.style.setProperty('--ax',Math.min(cw-24,Math.max(24,r.left+r.width/2-left))+'px');
+  card.classList.add(below?'arrow-up':'arrow-down');
+}
+function moveTour(d){const j=tourI+d;if(j<0||j>=TOUR.length)return;tourI=j;renderTour()}
+function endTour(){
+  if(!tourOpen())return;tourI=-1;lsSet(TOURKEY,'1');
+  if(tourEls){tourEls.veil.hidden=tourEls.spot.hidden=tourEls.card.hidden=true}
+  const b=$('b-help');if(b)b.focus({preventScroll:true});
+}
+addEventListener('resize',()=>placeTour());
+
 /* ---------- Actions ---------- */
 function go(i){const st=set();st.pi=Math.min(Math.max(0,i),st.pages.length-1);save();renderStage();if(settingsOpen())renderEditor()}
 function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();return}
@@ -335,6 +410,7 @@ function exportCode(){return JSON.stringify({app:'papan-masa',v:2,sets:S.sets.ma
 let edTab='content';
 
 document.addEventListener('click',async e=>{
+  if(helpOpen()&&!e.target.closest('.help-wrap'))closeHelp();
   if(e.target.id==='pair'){closeOverlay('pair');return}
   if(e.target.id==='ed'){closeOverlay('ed');return}
   const b=e.target.closest('[data-act]');if(!b)return;
@@ -354,6 +430,11 @@ document.addEventListener('click',async e=>{
     case 'closepair':closeOverlay('pair');break;
     case 'edit':toggleSettings();break;
     case 'close':closeOverlay('ed');break;
+    case 'help':toggleHelp();break;
+    case 'tour':startTour();break;
+    case 'tournext':moveTour(1);break;
+    case 'tourprev':moveTour(-1);break;
+    case 'tourend':endTour();break;
     case 'tab':edTab=b.dataset.tab;renderEditor();{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus()}break;
     case 'lang':setLang(b.dataset.lang);break;
     case 'goto':go(i);break;
@@ -384,6 +465,13 @@ document.addEventListener('click',async e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(tourOpen()){
+    if(e.key==='Escape')endTour();
+    else if(e.key==='ArrowRight'){e.preventDefault();if(tourI<TOUR.length-1)moveTour(1);else endTour()}
+    else if(e.key==='ArrowLeft'){e.preventDefault();moveTour(-1)}
+    return;
+  }
+  if(e.key==='Escape'&&helpOpen()){closeHelp();$('b-help').focus();return}
   if(e.key==='Escape'){
     if($('pair')&&!$('pair').hidden){closeOverlay('pair');return}
     if(settingsOpen()){closeOverlay('ed');return}
@@ -482,6 +570,9 @@ function renderEditor(){
         <textarea id="ed-import" rows="3" placeholder="${esc(t('importPh'))}"></textarea>
         <input type="file" id="ed-file" accept=".json,.txt,application/json,text/plain" aria-label="${esc(t('importLbl'))}"></div>
       <div class="row-btns"><button class="btn small primary" data-act="import">${esc(t('importBtn'))}</button></div></div>
+    <div class="group"><h3>${esc(t('helpGrp'))}</h3><div class="row-btns">
+      ${MODE==='display'?`<button class="btn small" data-act="tour">${esc(t('tourStart'))}</button>`:''}
+      <a class="btn small" href="${BASE}panduan/" target="_blank" rel="noopener">${esc(t('openGuide'))}</a></div></div>
     ${MODE==='display'?`<div class="group"><h3>${esc(t('keysGrp'))}</h3><div class="keys">
       <kbd>→</kbd><span>${esc(t('kNext'))}</span><kbd>←</kbd><span>${esc(t('kPrev'))}</span><kbd>F</kbd><span>${esc(t('kFs'))}</span>
       <kbd>S</kbd><span>${esc(t('kStart'))}</span><kbd>P</kbd><span>${esc(t('kPause'))}</span><kbd>E</kbd><span>${esc(t('kSettings'))}</span></div></div>`:''}`;
@@ -554,6 +645,7 @@ if(MODE==='display'){
     lsSet(ROOMKEY,code);
     connect(code,true).then(r=>{if(r!=='ok'){connErr=r.replace('error:','');updConn()}});
   }
+  if(!lsGet(TOURKEY))setTimeout(()=>{if(!tourOpen()&&!settingsOpen()&&!document.body.classList.contains('present')&&$('pair').hidden)startTour()},800);
 }else{
   $('k-joinform').addEventListener('submit',e=>{e.preventDefault();join($('k-code').value)});
   $('k-code').addEventListener('input',e=>{e.target.value=cleanCode(e.target.value)});
