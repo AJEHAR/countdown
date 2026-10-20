@@ -44,10 +44,14 @@ function sampleSet(){
     {id:uid(),title:t('s2t'),notes:t('s2n'),align:'left',footer:f,mode:'separate',timers:[]}
   ]};
 }
+/* Per-page size of each part of the display (1 = default). Bigger parts also get more room, so text is never cut off. */
+const SIZE_KEYS=['clock','date','title','notes','footer','cd'];
+function normSizes(z){const o={};SIZE_KEYS.forEach(k=>{const v=+(z&&z[k]);o[k]=v>=.6&&v<=1.6?v:1});return o}
+const sizes=p=>normSizes(p.sizes);
 const blankPage=f=>({id:uid(),title:t('newPageTitle'),notes:'',align:'center',footer:f||'',mode:'separate',timers:[]});
 function normSet(s){
   const pages=(Array.isArray(s.pages)?s.pages:[]).map(p=>({id:uid(),title:String(p.title??''),notes:String(p.notes??''),
-    align:['left','center','right'].includes(p.align)?p.align:'center',footer:String(p.footer??''),mode:p.mode==='continuous'?'continuous':'separate',
+    align:['left','center','right'].includes(p.align)?p.align:'center',footer:String(p.footer??''),mode:p.mode==='continuous'?'continuous':'separate',sizes:normSizes(p.sizes),
     timers:(Array.isArray(p.timers)?p.timers:[]).slice(0,3).map(x=>({id:uid(),label:String(x.label??''),min:Math.max(.1,+x.min||1),alert:!!x.alert,alertMin:Math.max(0,+x.alertMin||0),sound:validSound(x.sound)?x.sound:'loceng'}))}));
   if(!pages.length)pages.push(blankPage(''));
   return {id:uid(),name:String(s.name||'Import'),clock24:!!s.clock24,secs:!!s.secs,showDate:s.showDate!==false,scale:Math.min(1.5,Math.max(.6,+s.scale||1)),pi:0,pages};
@@ -169,11 +173,17 @@ function renderStage(){
   const st=set(),p=page(),n=p.timers.length;
   if(MODE==='display'){
     document.documentElement.style.setProperty('--scale',st.scale);
-    const stage=$('stage');stage.classList.toggle('no-timers',!n);
+    const stage=$('stage'),z=sizes(p);stage.classList.toggle('no-timers',!n);
+    const shrink=v=>Math.min(v,1);
+    [['--k-clock',shrink(z.clock)],['--k-date',z.date],['--k-title',shrink(z.title)],['--k-notes',shrink(z.notes)],['--k-footer',z.footer],['--k-cd',shrink(z.cd)]]
+      .forEach(([k,v])=>stage.style.setProperty(k,v));
+    stage.style.setProperty('--w-title',Math.max(z.title,1));stage.style.setProperty('--w-notes',Math.max(z.notes,1));
+    stage.style.setProperty('--cols',`2fr ${z.cd}fr`);stage.style.setProperty('--prows',`3fr ${2*z.cd}fr`);
+    const weights=[z.clock];
     const rows=[`<div class="row r-clock"><div class="plate"><div class="clock" id="clock"></div>${st.showDate!==false?'<div class="date" id="date"></div>':''}</div></div>`];
-    if(p.title)rows.push(`<div class="row r-title"><h1 class="title">${esc(p.title)}</h1></div>`);
-    if(p.notes||p.footer)rows.push(`<div class="row r-notes">${p.notes?`<div class="notes" style="text-align:${p.align}">${esc(p.notes)}</div>`:''}${p.footer?`<div class="footer">${esc(p.footer)}</div>`:''}</div>`);
-    stage.innerHTML=`<section class="info" style="grid-template-rows:repeat(${rows.length},minmax(0,1fr))">${rows.join('')}</section>`+
+    if(p.title){weights.push(z.title);rows.push(`<div class="row r-title"><h1 class="title">${esc(p.title)}</h1></div>`)}
+    if(p.notes||p.footer){weights.push(p.notes?z.notes:Math.max(.5,z.footer*.5));rows.push(`<div class="row r-notes">${p.notes?`<div class="notes" style="text-align:${p.align}">${esc(p.notes)}</div>`:''}${p.footer?`<div class="footer">${esc(p.footer)}</div>`:''}</div>`)}
+    stage.innerHTML=`<section class="info" style="grid-template-rows:${weights.map(w=>`minmax(0,${w}fr)`).join(' ')}">${rows.join('')}</section>`+
       (n?`<aside class="panel" style="--n:${n}" aria-label="${esc(t('countdowns'))}">${p.timers.map(x=>`
         <div class="tcard" data-tid="${x.id}"><div class="tc-label">${esc(x.label||t('cdN',{n:''}))}</div><div class="tc-digits">--:--</div><div class="tc-sub"></div></div>`).join('')}</aside>`:'');
     $('pinfo').innerHTML=`<b>${esc(st.name)}</b> · ${esc(t('pageOf',{a:st.pi+1,b:st.pages.length}))}`;
@@ -322,7 +332,7 @@ function openPair(){
   $('pair-h').textContent=t('pairTitle');$('pair-close').textContent=t('close');
   if($('pair').hidden)openOverlay('pair');
 }
-function openSettings(){renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
+function openSettings(){renaming=false;sessMenu=false;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
 function toggleSettings(){settingsOpen()?closeOverlay('ed'):openSettings()}
 
 
@@ -399,6 +409,11 @@ function endTour(){
 }
 addEventListener('resize',()=>placeTour());
 
+function newSession(){
+  S.sets.push({id:uid(),name:t('newSessionName'),clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:[blankPage('')]});
+  S.cur=S.sets.length-1;sessMenu=false;edTab='content';save();renderStage();renaming=true;renderEditor();
+  const i=$('ed-rename');if(i){i.focus();i.select()}flash(t('sessCreated'));
+}
 /* ---------- Actions ---------- */
 function go(i){const st=set();st.pi=Math.min(Math.max(0,i),st.pages.length-1);save();renderStage();if(settingsOpen())renderEditor()}
 function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();return}
@@ -406,11 +421,13 @@ function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();r
   setTimeout(()=>{if(btn.isConnected&&btn.dataset.armed){delete btn.dataset.armed;btn.textContent=old}},3000)}
 function flash(s){const m=$('ed-msg');if(m){m.textContent=s;m.className='msg';clearTimeout(flash.t);flash.t=setTimeout(()=>{if(m.isConnected){m.textContent=t('saved');m.className=''}},4000)}}
 function exportCode(){return JSON.stringify({app:'papan-masa',v:2,sets:S.sets.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,scale:s.scale,
-  pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))})}
-let edTab='content';
+  pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',sizes:sizes(p),timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))})}
+let edTab='content',renaming=false,sessMenu=false;
+function saveRename(){const i=$('ed-rename');if(i){const v=i.value.trim();if(v)set().name=v}renaming=false;save();renderStage();renderEditor()}
 
 document.addEventListener('click',async e=>{
   if(helpOpen()&&!e.target.closest('.help-wrap'))closeHelp();
+  if(sessMenu&&!e.target.closest('.sess-wrap')){sessMenu=false;renderEditor()}
   if(e.target.id==='pair'){closeOverlay('pair');return}
   if(e.target.id==='ed'){closeOverlay('ed');return}
   const b=e.target.closest('[data-act]');if(!b)return;
@@ -440,10 +457,14 @@ document.addEventListener('click',async e=>{
     case 'goto':go(i);break;
     case 'newroom':{const c=genCode();lsSet(ROOMKEY,c);flash(t('newRoomMsg'));await connect(c,true);renderEditor();closeOverlay('ed');openPair();break}
     case 'leave':disconnect();lsSet(CTLKEY,'');history.replaceState(null,'',location.pathname);closeOverlay('ed');showJoin('');break;
-    case 'newset':S.sets.push({id:uid(),name:t('newSessionName'),clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:[blankPage('')]});S.cur=S.sets.length-1;save();renderStage();renderEditor();break;
-    case 'dupset':{const c=normSet(JSON.parse(JSON.stringify(st)));c.name=st.name+t('copySuffix');S.sets.push(c);S.cur=S.sets.length-1;save();renderStage();renderEditor();break}
+    case 'newset':newSession();break;
+    case 'sessmenu':sessMenu=!sessMenu;renderEditor();if(sessMenu){const f=$('ed').querySelector('.sess-pop .hp-item');if(f)f.focus()}break;
+    case 'rename':sessMenu=false;renaming=true;renderEditor();{const i=$('ed-rename');if(i){i.focus();i.select()}}break;
+    case 'renamesave':saveRename();break;
+    case 'renamecancel':renaming=false;renderEditor();break;
+    case 'dupset':{sessMenu=false;const c=normSet(JSON.parse(JSON.stringify(st)));c.name=st.name+t('copySuffix');S.sets.push(c);S.cur=S.sets.length-1;save();renderStage();renderEditor();break}
     case 'delset':if(S.sets.length<2){flash(t('needSession'));break}
-      armed(b,()=>{S.sets.splice(S.cur,1);S.cur=0;save();renderStage();renderEditor()});break;
+      armed(b,()=>{S.sets.splice(S.cur,1);S.cur=0;sessMenu=false;save();renderStage();renderEditor()});break;
     case 'addpage':st.pages.splice(st.pi+1,0,blankPage(p.footer));st.pi++;save();renderStage();edTab='content';renderEditor();break;
     case 'duppage':{const c=JSON.parse(JSON.stringify(p));c.id=uid();c.timers.forEach(x=>x.id=uid());st.pages.splice(st.pi+1,0,c);st.pi++;save();renderStage();renderEditor();break}
     case 'movepage':{const j=st.pi+(+b.dataset.d);if(j<0||j>=st.pages.length)break;const [x]=st.pages.splice(st.pi,1);st.pages.splice(j,0,x);st.pi=j;save();renderStage();renderEditor();break}
@@ -452,6 +473,8 @@ document.addEventListener('click',async e=>{
     case 'align':p.align=b.dataset.v;save();renderStage();renderEditor();break;
     case 'addtimer':if(p.timers.length<3){p.timers.push(timer(p.timers.length?t('cdN',{n:p.timers.length+1}):t('defaultLabel'),p.timers.length?30:60));save();renderStage();renderEditor()}break;
     case 'deltimer':{const [x]=p.timers.splice(i,1);if(x)delete R[x.id];save();renderStage();renderEditor();break}
+    case 'sizesall':{const z=sizes(p);st.pages.forEach(pg=>pg.sizes={...z});save();renderStage();flash(t('sizesAllDone',{n:st.pages.length}));break}
+    case 'sizesreset':p.sizes=normSizes({});save();renderStage();renderEditor();break;
     case 'testsound':playSound((p.timers[i]||{}).sound||'loceng');break;
     case 'export':$('ed-export').value=exportCode();flash(t('codeMade'));break;
     case 'copy':{const ta=$('ed-export');if(!ta.value)ta.value=exportCode();
@@ -472,6 +495,8 @@ document.addEventListener('keydown',e=>{
     return;
   }
   if(e.key==='Escape'&&helpOpen()){closeHelp();$('b-help').focus();return}
+  if(e.target&&e.target.id==='ed-rename'){if(e.key==='Enter'){e.preventDefault();saveRename()}else if(e.key==='Escape'){renaming=false;renderEditor()}return}
+  if(e.key==='Escape'&&sessMenu){sessMenu=false;renderEditor();const b=$('ed').querySelector('.sess-more');if(b)b.focus();return}
   if(e.key==='Escape'){
     if($('pair')&&!$('pair').hidden){closeOverlay('pair');return}
     if(settingsOpen()){closeOverlay('ed');return}
@@ -548,9 +573,17 @@ function renderEditor(){
       <div class="field"><label class="check"><input type="checkbox" id="ed-secs" data-f="secs"${st.secs?' checked':''}> ${esc(t('secs'))}</label>
         <label class="check"><input type="checkbox" id="ed-date" data-f="showDate"${st.showDate!==false?' checked':''}> ${esc(t('showDate'))}</label></div>
       <div class="field"><label for="ed-scale">${esc(t('size'))}: <span id="ed-scalev">${Math.round(st.scale*100)}%</span></label>
-        <input type="range" id="ed-scale" data-f="scale" min="60" max="150" step="5" value="${Math.round(st.scale*100)}"></div>
+        <input type="range" class="peek" id="ed-scale" data-f="scale" min="60" max="150" step="5" value="${Math.round(st.scale*100)}"></div>
     </div>
-    <p class="hint">${esc(db?t('timeHintFb'):t('timeHint'))}</p>`;
+    <p class="hint">${esc(db?t('timeHintFb'):t('timeHint'))}</p>
+    <div class="group sizes"><h3>${esc(t('sizesGrp',{n:st.pi+1}))}</h3>
+      <p class="hint">${esc(t('sizesHint'))}</p>
+      <div class="szgrid">${SIZE_KEYS.map(k=>{const v=Math.round(sizes(p)[k]*100);return `
+        <div class="sz"><label for="ed-sz-${k}">${esc(t('sz_'+k))}</label>
+          <input type="range" class="peek" id="ed-sz-${k}" data-f="size" data-k="${k}" min="60" max="160" step="5" value="${v}">
+          <output id="ed-szv-${k}" for="ed-sz-${k}">${v}%</output></div>`}).join('')}</div>
+      <div class="row-btns"><button class="btn small" data-act="sizesall">${esc(t('sizesAll'))}</button><button class="btn small" data-act="sizesreset">${esc(t('sizesReset'))}</button></div>
+    </div>`;
   }else{
     const phone=MODE==='display'
       ?(db?`<p>${esc(t('roomCode'))}: <b>${room||'…'}</b></p>
@@ -558,9 +591,6 @@ function renderEditor(){
           <p class="hint">${esc(t('roomHint'))}</p>`:`<p class="hint">${esc(t('noFb'))}</p>`)
       :`<p>${esc(t('roomConnected',{code:room||'-'}))}</p><div class="row-btns"><button class="btn small" data-act="leave">${esc(t('changeRoom'))}</button></div>`;
     body=`
-    <div class="group"><h3>${esc(t('sessionGrp'))}</h3>
-      <div class="field"><label for="ed-setname">${esc(t('sessionName'))}</label><input type="text" id="ed-setname" data-f="setname" value="${esc(st.name)}"></div>
-      <div class="row-btns"><button class="btn small" data-act="newset">${esc(t('newSession'))}</button><button class="btn small" data-act="dupset">${esc(t('dupSession'))}</button><button class="btn small danger" data-act="delset">${esc(t('delSession'))}</button></div></div>
     <div class="group"><h3>${esc(t('phoneGrp'))}</h3>${phone}</div>
     <div class="group"><h3>${esc(t('backupGrp'))}</h3>
       <p class="hint">${esc(t('backupHint'))}</p>
@@ -581,8 +611,22 @@ function renderEditor(){
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ed-h">
     <div class="m-head">
       <h2 id="ed-h">${esc(t('settings').replace('✎ ',''))}</h2>
-      <div class="m-session"><label for="ed-set">${esc(t('sessionLbl'))}</label>
-        <select id="ed-set">${S.sets.map((s,i)=>`<option value="${i}"${i===S.cur?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="m-session">${renaming?`
+        <label for="ed-rename">${esc(t('sessionName'))}</label>
+        <input type="text" id="ed-rename" value="${esc(st.name)}" maxlength="80">
+        <button class="btn small primary" data-act="renamesave">${esc(t('save'))}</button>
+        <button class="btn small" data-act="renamecancel">${esc(t('cancel'))}</button>`:`
+        <label for="ed-set">${esc(t('sessionLbl'))}</label>
+        <select id="ed-set">${S.sets.map((s,i)=>`<option value="${i}"${i===S.cur?' selected':''}>${esc(s.name)}</option>`).join('')}
+          <option disabled>──────────</option><option value="new">${esc(t('newSession'))}</option></select>
+        <span class="sess-wrap">
+          <button class="icon-btn sess-more" data-act="sessmenu" aria-haspopup="true" aria-expanded="${sessMenu}" aria-label="${esc(t('sessMore'))}">⋯</button>
+          ${sessMenu?`<span class="sess-pop" role="menu">
+            <button class="hp-item" role="menuitem" data-act="rename">${esc(t('rename'))}</button>
+            <button class="hp-item" role="menuitem" data-act="dupset">${esc(t('dupSession'))}</button>
+            <button class="hp-item danger" role="menuitem" data-act="delset">${esc(t('delSession'))}</button>
+          </span>`:''}
+        </span>`}</div>
       <button class="icon-btn" data-act="close" aria-label="${esc(t('close'))}">✕</button>
     </div>
     <div class="m-pages">${st.pages.map((pg,i)=>`<button class="chip${i===st.pi?' on':''}" data-act="goto" data-i="${i}">${i+1}. ${esc(pg.title||t('untitled'))}</button>`).join('')}
@@ -596,7 +640,7 @@ function renderEditor(){
 
 $('ed').addEventListener('input',e=>{
   const el=e.target,f=el.dataset.f,st=set(),p=page(),i=+el.dataset.i;
-  if(el.id==='ed-set'){S.cur=+el.value;save();renderStage();renderEditor();return}
+  if(el.id==='ed-set'){if(el.value==='new'){newSession();return}S.cur=+el.value;save();renderStage();renderEditor();return}
   if(!f)return;
   switch(f){
     case 'setname':{st.name=el.value;const o=document.querySelector(`#ed-set option[value="${S.cur}"]`);if(o)o.textContent=el.value;break}
@@ -612,9 +656,13 @@ $('ed').addEventListener('input',e=>{
     case 'secs':st.secs=el.checked;break;
     case 'showDate':st.showDate=el.checked;break;
     case 'scale':st.scale=+el.value/100;$('ed-scalev').textContent=el.value+'%';break;
+    case 'size':{const k=el.dataset.k;p.sizes=normSizes(p.sizes);p.sizes[k]=+el.value/100;const o=$('ed-szv-'+k);if(o)o.textContent=el.value+'%';break}
   }
   save(true);renderStage();
 });
+const endPeek=()=>$('ed').classList.remove('peek');
+$('ed').addEventListener('pointerdown',e=>{if(e.target.matches('input.peek'))$('ed').classList.add('peek')});
+addEventListener('pointerup',endPeek);addEventListener('pointercancel',endPeek);
 $('ed').addEventListener('change',e=>{
   if(e.target.id==='ed-file'&&e.target.files[0]){const r=new FileReader();
     r.onload=()=>{$('ed-import').value=r.result;flash(t('fileRead'))};r.readAsText(e.target.files[0])}
