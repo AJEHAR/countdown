@@ -231,6 +231,7 @@ function tick(){
     }
   });
   checkEvents(n);
+  if(settingsOpen()&&edTab==='data')document.querySelectorAll('#ed [data-exp]').forEach(el=>{const x=+el.dataset.exp;if(!x)return;const v=leftText(x);if(el.textContent!==v)el.textContent=v;el.classList.toggle('soon',x-now()<DAY)});
   const sn=$('snd');
   if(sn){const need=set().pages.some(pg=>pg.timers.some(x=>(x.sound||'loceng')!=='none'));
     const txt=!need?'':(actx&&actx.state==='running')?t('soundOn'):t('soundOff');
@@ -316,7 +317,7 @@ if(MODE==='display'){
 
 /* ---------- Overlays ---------- */
 function openOverlay(id){const o=$(id);o.classList.remove('closing');o.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add('open')))}
-function closeOverlay(id){const o=$(id);if(!o||o.hidden)return;o.classList.add('closing');o.classList.remove('open');
+function closeOverlay(id){hideTip();const o=$(id);if(!o||o.hidden)return;o.classList.add('closing');o.classList.remove('open');
   setTimeout(()=>{if(!o.classList.contains('open')){o.hidden=true;o.classList.remove('closing')}},130)}
 const settingsOpen=()=>!!$('ed')&&!$('ed').hidden&&!$('ed').classList.contains('closing');
 function controlURL(){return location.origin+location.pathname.replace(/[^/]*$/,'')+'kawal/?r='+room}
@@ -332,7 +333,7 @@ function openPair(){
   $('pair-h').textContent=t('pairTitle');$('pair-close').textContent=t('close');
   if($('pair').hidden)openOverlay('pair');
 }
-function openSettings(){renaming=false;sessMenu=false;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
+function openSettings(){renaming=false;sessMenu=false;sessOpen=false;shareForm=false;newShare='';takePreview=null;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
 function toggleSettings(){settingsOpen()?closeOverlay('ed'):openSettings()}
 
 
@@ -411,23 +412,124 @@ addEventListener('resize',()=>placeTour());
 
 function newSession(){
   S.sets.push({id:uid(),name:t('newSessionName'),clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:[blankPage('')]});
-  S.cur=S.sets.length-1;sessMenu=false;edTab='content';save();renderStage();renaming=true;renderEditor();
+  S.cur=S.sets.length-1;sessMenu=false;sessOpen=false;edTab='content';save();renderStage();renaming=true;renderEditor();
   const i=$('ed-rename');if(i){i.focus();i.select()}flash(t('sessCreated'));
 }
 /* ---------- Actions ---------- */
 function go(i){const st=set();st.pi=Math.min(Math.max(0,i),st.pages.length-1);save();renderStage();if(settingsOpen())renderEditor()}
+function activeTimers(pg){const n=now();return pg.timers.some(x=>['run','pause','wait'].includes(tstate(x,n)))}
 function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();return}
   const old=btn.textContent;btn.dataset.armed='1';btn.textContent=t(key||'armDelete');
   setTimeout(()=>{if(btn.isConnected&&btn.dataset.armed){delete btn.dataset.armed;btn.textContent=old}},3000)}
 function flash(s){const m=$('ed-msg');if(m){m.textContent=s;m.className='msg';clearTimeout(flash.t);flash.t=setTimeout(()=>{if(m.isConnected){m.textContent=t('saved');m.className=''}},4000)}}
-function exportCode(){return JSON.stringify({app:'papan-masa',v:2,sets:S.sets.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,scale:s.scale,
-  pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',sizes:sizes(p),timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))})}
-let edTab='content',renaming=false,sessMenu=false;
+function exportObj(list){return {app:'papan-masa',v:2,sets:list.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,scale:s.scale,
+  pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',sizes:sizes(p),timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))}}
+const exportCode=()=>JSON.stringify(exportObj(S.sets));
+let edTab='content',renaming=false,sessMenu=false,sessOpen=false;
+/* ---------- Share codes ----------
+   A share code (XXXX-XXXX) points to a copy of chosen sessions stored in Firebase under shares/CODE.
+   Firebase rules refuse reads after the expiry time or once cancelled. Cancelling needs the secret
+   that only the creating device keeps (localStorage), stored unreadably under shareOwners/CODE. */
+const SHAREKEY='papanMasa.shares.v1',DAY=864e5;
+let shareForm=false,shareSel=new Set(),shareDur=3,newShare='',takeCode='',takePreview=null,takeBusy=false;
+function loadShares(){const a=load(SHAREKEY);return (Array.isArray(a)?a:[]).filter(x=>x&&x.code&&(!x.exp||x.exp>now()))}
+function saveShares(a){lsSet(SHAREKEY,JSON.stringify(a))}
+const genShareCode=()=>Array.from({length:8},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join('');
+const cleanShare=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+const fmtShare=c=>c.length>4?c.slice(0,4)+'-'+c.slice(4):c;
+function fmtDT(ms){try{return new Intl.DateTimeFormat(LANG==='ms'?'ms-MY':'en-GB',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}).format(new Date(ms))}catch(e){return new Date(ms).toLocaleString()}}
+function leftText(exp){
+  if(!exp)return t('noExpiry');const ms=exp-now();if(ms<=0)return t('expired');
+  const d=Math.floor(ms/DAY),h=Math.floor(ms%DAY/36e5),m=Math.max(1,Math.floor(ms%36e5/6e4));
+  const parts=d?[t('dUnit',{n:d}),h?t('hUnit',{n:h}):'']:h?[t('hUnit',{n:h}),t('mUnit',{n:m})]:[t('mUnit',{n:m})];
+  return t('endsIn',{t:parts.filter(Boolean).join(' ')});
+}
+async function createShare(){
+  const idx=[...shareSel].filter(i=>S.sets[i]).sort((a,b)=>a-b);if(!idx.length){flash(t('shareNone'));return}
+  const list=idx.map(i=>S.sets[i]),payload=JSON.stringify(exportObj(list)),created=Date.now()+clockOff,exp=shareDur?created+shareDur*DAY:0;
+  let secret='';try{secret=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('')}catch(e){secret=uid()+uid()+uid()}
+  const btn=$('ed').querySelector('[data-act="sharecreate"]');if(btn){btn.disabled=true;btn.textContent=t('creating')}
+  for(let tries=0;tries<4;tries++){
+    const code=genShareCode();
+    try{
+      await db.ref().update({['shares/'+code]:{data:payload,exp,created},['shareOwners/'+code+'/'+secret]:true});
+      const mine=loadShares();mine.unshift({code,secret,exp,created,names:list.map(s=>s.name)});saveShares(mine);
+      shareForm=false;newShare=code;renderEditor();flash(t('shareMade'));return;
+    }catch(e){if(!/permission/i.test(String(e&&(e.code||e.message))))break}
+  }
+  if(btn){btn.disabled=false;btn.textContent=t('shareCreate')}
+  flash(t('shareFail'));
+}
+async function revokeShare(code){
+  const mine=loadShares(),m=mine.find(x=>x.code===code);if(!m)return;
+  try{await db.ref('shares/'+code+'/revoked').set(m.secret)}catch(e){}
+  saveShares(mine.filter(x=>x.code!==code));if(newShare===code)newShare='';renderEditor();flash(t('shareRevoked'));
+}
+function takeErr(msg){const el=$('ed-take-err');if(el)el.textContent=msg;const i=$('ed-take');if(i){i.toggleAttribute('aria-invalid',!!msg);i.classList.toggle('bad',!!msg)}}
+async function checkShare(){
+  const code=cleanShare(takeCode);takePreview=null;
+  if(code.length!==8){takeErr(t('shareBadFmt'));return}
+  if(!db){takeErr(t('noFb'));return}
+  takeBusy=true;renderEditor();
+  let err='';
+  try{
+    const snap=await db.ref('shares/'+code).get(),v=snap.val();
+    if(!v||v.revoked||(v.exp&&v.exp<=now()))err='shareGone';
+    else{const d=JSON.parse(v.data),list=(Array.isArray(d.sets)?d.sets:[]).map(normSet);if(!list.length)err='shareGone';else takePreview={code,exp:v.exp||0,sets:list}}
+  }catch(e){err=/permission/i.test(String(e&&(e.code||e.message)))?'shareGone':'shareNet'}
+  takeBusy=false;renderEditor();if(err)takeErr(t(err));
+}
+function importSets(list){S.sets.push(...list);S.cur=S.sets.length-list.length;save();renderStage();renderEditor();flash(t('imported',{n:list.length}))}
+function downloadCopy(){
+  const d=new Date(now()),ymd=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+  const blob=new Blob([JSON.stringify(exportObj(S.sets),null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`azr-countdown-${ymd}.json`;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);flash(t('downloaded'));
+}
+function shareHtml(){
+  if(!db)return `<p class="hint">${esc(t('noFb'))}</p>`;
+  const mine=loadShares();let h='';
+  if(shareForm){
+    const all=S.sets.every((_,i)=>shareSel.has(i));
+    h+=`<div class="sharebox">
+      <div class="field"><span class="flabel">${esc(t('shareWhich'))}</span>
+        <div class="checklist">${S.sets.map((s,i)=>`<label class="ck-row"><input type="checkbox" id="ed-sh-${i}" data-f="sharesel" data-i="${i}"${shareSel.has(i)?' checked':''}>
+          <span class="ck-name">${esc(s.name)}</span><span class="sl-meta">${esc(t(s.pages.length===1?'pageCount1':'pagesCount',{n:s.pages.length}))}</span></label>`).join('')}</div>
+        ${S.sets.length>1?`<button class="linkbtn" data-act="shareall">${esc(t(all?'selectNone':'selectAll'))}</button>`:''}</div>
+      <div class="field"><span class="flabel">${esc(t('shareFor'))}</span>
+        <div class="seg" role="group" aria-label="${esc(t('shareFor'))}">${[1,2,3,7,0].map(d=>`<button data-act="sharedur" data-v="${d}" class="${shareDur===d?'on':''}" aria-pressed="${shareDur===d}">${esc(d?t(d===1?'day1':'days',{n:d}):t('noLimit'))}</button>`).join('')}</div>
+        ${shareDur===0?`<p class="fnote">${esc(t('noLimitNote'))}</p>`:`<p class="hint">${esc(t('validUntil',{t:fmtDT(now()+shareDur*DAY)}))}</p>`}</div>
+      <div class="row-btns"><button class="btn small primary" data-act="sharecreate"${shareSel.size?'':' disabled'}>${esc(t('shareCreate'))}</button><button class="btn small" data-act="sharecancel">${esc(t('cancel'))}</button></div>
+    </div>`;
+  }else h+=`<div class="row-btns"><button class="btn small primary" data-act="sharestart">${esc(t('shareStart'))}</button></div>`;
+  if(mine.length)h+=`<div class="mycodes"><span class="flabel">${esc(t('myCodes'))}</span>${mine.map(m=>`
+    <div class="mc-row${m.code===newShare?' new':''}">
+      <div class="mc-main"><span class="mc-code">${fmtShare(m.code)}</span><span class="mc-names">${esc((m.names||[]).join(', '))}</span></div>
+      <div class="mc-side"><span class="mc-left${m.exp&&m.exp-now()<DAY?' soon':''}" data-exp="${m.exp||0}" title="${m.exp?esc(t('validUntil',{t:fmtDT(m.exp)})):''}">${esc(leftText(m.exp))}</span>
+        <button class="btn small" data-act="sharecopy" data-code="${m.code}">${esc(t('copyCode'))}</button>
+        <button class="btn small danger" data-act="sharerevoke" data-code="${m.code}">${esc(t('revoke'))}</button></div>
+    </div>`).join('')}</div>`;
+  return h;
+}
+function takeHtml(){
+  if(!db)return `<p class="hint">${esc(t('noFb'))}</p>`;
+  let h=`<div class="takerow"><input type="text" id="ed-take" class="codein" value="${esc(fmtShare(cleanShare(takeCode)))}" placeholder="AB7K-29QD" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="${esc(t('takeGrp'))}" aria-describedby="ed-take-err">
+    <button class="btn small" data-act="takecheck"${takeBusy?' disabled':''}>${esc(t(takeBusy?'checking':'takeCheck'))}</button></div>
+    <p class="ferr" id="ed-take-err" role="alert"></p>`;
+  if(takePreview){const p=takePreview;h+=`<div class="preview">
+    <p class="pv-head"><b>${fmtShare(p.code)}</b> · ${esc(p.exp?t('validUntil',{t:fmtDT(p.exp)}):t('noExpiry'))}</p>
+    <span class="flabel">${esc(t('takeContains'))}</span>
+    <ul>${p.sets.map(s=>`<li><b>${esc(s.name)}</b> <span class="sl-meta">${esc(t(s.pages.length===1?'pageCount1':'pagesCount',{n:s.pages.length}))}</span></li>`).join('')}</ul>
+    <div class="row-btns"><button class="btn small primary" data-act="takeimport">${esc(t('takeImport'))}</button><button class="btn small" data-act="takecancel">${esc(t('cancel'))}</button></div></div>`}
+  return h;
+}
 function saveRename(){const i=$('ed-rename');if(i){const v=i.value.trim();if(v)set().name=v}renaming=false;save();renderStage();renderEditor()}
 
 document.addEventListener('click',async e=>{
+  if(tipOpen()&&!e.target.closest('.tip-btn,#tipbox'))hideTip();
   if(helpOpen()&&!e.target.closest('.help-wrap'))closeHelp();
   if(sessMenu&&!e.target.closest('.sess-wrap')){sessMenu=false;renderEditor()}
+  if(sessOpen&&!e.target.closest('.sess-pick')){sessOpen=false;renderEditor()}
   if(e.target.id==='pair'){closeOverlay('pair');return}
   if(e.target.id==='ed'){closeOverlay('ed');return}
   const b=e.target.closest('[data-act]');if(!b)return;
@@ -435,7 +537,9 @@ document.addEventListener('click',async e=>{
   switch(a){
     case 'start':{if(isChain()){startAll();break}const x=findT(b.dataset.tid);if(x){startT(x);save();tick()}break}
     case 'pause':{if(isChain()){pauseAll();break}const x=findT(b.dataset.tid);if(x){pauseT(x);save();tick()}break}
-    case 'mode':p.mode=b.dataset.v==='continuous'?'continuous':'separate';p.timers.forEach(x=>delete R[x.id]);save();renderStage();renderEditor();break;
+    case 'mode':{const v=b.dataset.v==='continuous'?'continuous':'separate';if((p.mode||'separate')===v)break;
+      const apply=()=>{p.mode=v;p.timers.forEach(x=>delete R[x.id]);save();renderStage();renderEditor()};
+      if(activeTimers(p)){if(!b.dataset.armed)flash(t('modeWarn'));armed(b,apply,'armConfirm')}else apply();break}
     case 'reset':delete R[b.dataset.tid];save();tick();break;
     case 'startall':startAll();break;
     case 'pauseall':pauseAll();break;
@@ -447,6 +551,7 @@ document.addEventListener('click',async e=>{
     case 'closepair':closeOverlay('pair');break;
     case 'edit':toggleSettings();break;
     case 'close':closeOverlay('ed');break;
+    case 'tip':if(tipBtn===b&&tipPinned)hideTip();else showTip(b,true);break;
     case 'help':toggleHelp();break;
     case 'tour':startTour();break;
     case 'tournext':moveTour(1);break;
@@ -458,7 +563,9 @@ document.addEventListener('click',async e=>{
     case 'newroom':{const c=genCode();lsSet(ROOMKEY,c);flash(t('newRoomMsg'));await connect(c,true);renderEditor();closeOverlay('ed');openPair();break}
     case 'leave':disconnect();lsSet(CTLKEY,'');history.replaceState(null,'',location.pathname);closeOverlay('ed');showJoin('');break;
     case 'newset':newSession();break;
-    case 'sessmenu':sessMenu=!sessMenu;renderEditor();if(sessMenu){const f=$('ed').querySelector('.sess-pop .hp-item');if(f)f.focus()}break;
+    case 'sesslist':sessOpen=!sessOpen;sessMenu=false;renderEditor();if(sessOpen){const f=$('ed').querySelector('.sl-item.on')||$('ed').querySelector('.sl-item');if(f)f.focus()}break;
+    case 'pickset':sessOpen=false;S.cur=i;save();renderStage();renderEditor();{const b=$('ed-set');if(b)b.focus()}break;
+    case 'sessmenu':sessOpen=false;sessMenu=!sessMenu;renderEditor();if(sessMenu){const f=$('ed').querySelector('.sess-pop .hp-item');if(f)f.focus()}break;
     case 'rename':sessMenu=false;renaming=true;renderEditor();{const i=$('ed-rename');if(i){i.focus();i.select()}}break;
     case 'renamesave':saveRename();break;
     case 'renamecancel':renaming=false;renderEditor();break;
@@ -472,14 +579,26 @@ document.addEventListener('click',async e=>{
       armed(b,()=>{p.timers.forEach(x=>delete R[x.id]);st.pages.splice(st.pi,1);save();renderStage();renderEditor()});break;
     case 'align':p.align=b.dataset.v;save();renderStage();renderEditor();break;
     case 'addtimer':if(p.timers.length<3){p.timers.push(timer(p.timers.length?t('cdN',{n:p.timers.length+1}):t('defaultLabel'),p.timers.length?30:60));save();renderStage();renderEditor()}break;
-    case 'deltimer':{const [x]=p.timers.splice(i,1);if(x)delete R[x.id];save();renderStage();renderEditor();break}
+    case 'deltimer':armed(b,()=>{const [x]=p.timers.splice(i,1);if(x)delete R[x.id];save();renderStage();renderEditor()});break;
     case 'sizesall':{const z=sizes(p);st.pages.forEach(pg=>pg.sizes={...z});save();renderStage();flash(t('sizesAllDone',{n:st.pages.length}));break}
     case 'sizesreset':p.sizes=normSizes({});save();renderStage();renderEditor();break;
     case 'testsound':playSound((p.timers[i]||{}).sound||'loceng');break;
-    case 'export':$('ed-export').value=exportCode();flash(t('codeMade'));break;
-    case 'copy':{const ta=$('ed-export');if(!ta.value)ta.value=exportCode();
+    case 'export':{const ta=$('ed-export');ta.value=exportCode();ta.hidden=false;flash(t('codeMade'));break}
+    case 'copy':{const ta=$('ed-export');if(!ta.value)ta.value=exportCode();ta.hidden=false;
       const fb=()=>{ta.focus();ta.select();flash(t('selectCopy'))};
       try{navigator.clipboard.writeText(ta.value).then(()=>flash(t('copied')),fb)}catch(err){fb()}break}
+    case 'sharestart':shareForm=true;shareSel=new Set([S.cur]);newShare='';renderEditor();break;
+    case 'sharecancel':shareForm=false;renderEditor();break;
+    case 'shareall':{const all=S.sets.every((_,j)=>shareSel.has(j));shareSel=all?new Set():new Set(S.sets.map((_,j)=>j));renderEditor();break}
+    case 'sharedur':shareDur=+b.dataset.v;renderEditor();break;
+    case 'sharecreate':createShare();break;
+    case 'sharecopy':{const c=fmtShare(b.dataset.code);const ok=()=>flash(t('codeCopied',{c}));
+      try{navigator.clipboard.writeText(c).then(ok,()=>flash(c))}catch(err){flash(c)}break}
+    case 'sharerevoke':armed(b,()=>revokeShare(b.dataset.code),'armConfirm');break;
+    case 'takecheck':checkShare();break;
+    case 'takeimport':if(takePreview){const l=takePreview.sets;takePreview=null;takeCode='';importSets(l)}break;
+    case 'takecancel':takePreview=null;takeCode='';renderEditor();break;
+    case 'download':downloadCopy();break;
     case 'import':{const txt=$('ed-import').value.trim();if(!txt){flash(t('pasteFirst'));break}
       try{const d=JSON.parse(txt);const sets=(Array.isArray(d.sets)?d.sets:[d]).map(normSet);
         S.sets.push(...sets);S.cur=S.sets.length-sets.length;save();renderStage();renderEditor();flash(t('imported',{n:sets.length}))}
@@ -488,6 +607,7 @@ document.addEventListener('click',async e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&tipOpen()){const b=tipBtn;hideTip();if(b){tipQuiet=true;b.focus();tipQuiet=false}return}
   if(tourOpen()){
     if(e.key==='Escape')endTour();
     else if(e.key==='ArrowRight'){e.preventDefault();if(tourI<TOUR.length-1)moveTour(1);else endTour()}
@@ -495,7 +615,14 @@ document.addEventListener('keydown',e=>{
     return;
   }
   if(e.key==='Escape'&&helpOpen()){closeHelp();$('b-help').focus();return}
+  if(e.target&&e.target.id==='ed-take'&&e.key==='Enter'){e.preventDefault();takeCode=e.target.value;checkShare();return}
   if(e.target&&e.target.id==='ed-rename'){if(e.key==='Enter'){e.preventDefault();saveRename()}else if(e.key==='Escape'){renaming=false;renderEditor()}return}
+  if(sessOpen&&e.target.closest&&e.target.closest('.sess-list')){
+    const items=[...$('ed').querySelectorAll('.sl-item')],j=items.indexOf(e.target);
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const n=items[(j+(e.key==='ArrowDown'?1:-1)+items.length)%items.length];if(n)n.focus();return}
+    if(e.key==='Home'||e.key==='End'){e.preventDefault();items[e.key==='Home'?0:items.length-1].focus();return}
+  }
+  if(e.key==='Escape'&&sessOpen){sessOpen=false;renderEditor();const b=$('ed-set');if(b)b.focus();return}
   if(e.key==='Escape'&&sessMenu){sessMenu=false;renderEditor();const b=$('ed').querySelector('.sess-more');if(b)b.focus();return}
   if(e.key==='Escape'){
     if($('pair')&&!$('pair').hidden){closeOverlay('pair');return}
@@ -515,7 +642,42 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- Settings popup ---------- */
+/* ---------- Info tooltips (ⓘ) ----------
+   Hover or focus shows a short explanation; tap/click pins it (phones have no hover). Esc or a click elsewhere closes it. */
+const TIP_LINK={session:'sessions',page:'sessions',footer:'content',duration:'countdowns',timing:'timing',blink:'countdowns',sound:'sound',
+  lang:'display-options',clock:'help',scale:'display-options',sizes:'display-options',room:'phone',share:'after',take:'after',file:'after'};
+function info(k){return `<button type="button" class="tip-btn" data-act="tip" data-tip="${k}" aria-label="${esc(t('moreInfo'))}" aria-expanded="false"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.3v3.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="4.9" r="1" fill="currentColor"/></svg></button>`}
+let tipEl=null,tipBtn=null,tipPinned=false,tipHideT=null,tipQuiet=false;
+function showTip(btn,pin){
+  clearTimeout(tipHideT);
+  if(!tipEl){tipEl=document.createElement('div');tipEl.id='tipbox';tipEl.setAttribute('role','tooltip');document.body.appendChild(tipEl)}
+  if(tipBtn&&tipBtn!==btn){tipBtn.setAttribute('aria-expanded','false');tipBtn.removeAttribute('aria-describedby')}
+  const k=btn.dataset.tip,a=TIP_LINK[k];
+  tipEl.innerHTML=`<p>${esc(t('i_'+k))}</p>${a?`<a href="${BASE}panduan/#${a}" target="_blank" rel="noopener">${esc(t('readMore'))} →</a>`:''}`;
+  tipEl.hidden=false;tipBtn=btn;tipPinned=!!pin;
+  btn.setAttribute('aria-expanded',String(!!pin));btn.setAttribute('aria-describedby','tipbox');
+  const r=btn.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight,gap=10;
+  let left=Math.min(innerWidth-w-12,Math.max(12,r.left+r.width/2-w/2)),top=r.top-gap-h,below=false;
+  if(top<12){top=r.bottom+gap;below=true}
+  tipEl.style.left=left+'px';tipEl.style.top=top+'px';
+  tipEl.style.setProperty('--ax',Math.min(w-14,Math.max(14,r.left+r.width/2-left))+'px');
+  tipEl.classList.toggle('below',below);
+}
+function hideTip(){clearTimeout(tipHideT);if(tipEl)tipEl.hidden=true;if(tipBtn){tipBtn.setAttribute('aria-expanded','false');tipBtn.removeAttribute('aria-describedby')}tipBtn=null;tipPinned=false}
+const tipOpen=()=>!!tipEl&&!tipEl.hidden;
+const softHide=()=>{if(!tipPinned){clearTimeout(tipHideT);tipHideT=setTimeout(hideTip,160)}};
+document.addEventListener('mouseover',e=>{const b=e.target.closest&&e.target.closest('.tip-btn');
+  if(b){if(!(tipBtn===b&&tipPinned))showTip(b,false);return}
+  if(e.target.closest&&e.target.closest('#tipbox'))clearTimeout(tipHideT)});
+document.addEventListener('mouseout',e=>{const from=e.target.closest&&e.target.closest('.tip-btn,#tipbox');if(!from)return;
+  const to=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('.tip-btn,#tipbox');if(!to)softHide()});
+document.addEventListener('focusin',e=>{const b=e.target.closest&&e.target.closest('.tip-btn');if(b&&tipBtn!==b&&!tipQuiet)showTip(b,false)});
+document.addEventListener('focusout',e=>{if(!(e.target.closest&&e.target.closest('.tip-btn,#tipbox')))return;
+  const to=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('.tip-btn,#tipbox');if(!to)softHide()});
+addEventListener('resize',()=>{if(tipOpen())hideTip()});
+
 function renderEditor(){
+  hideTip();
   const st=set(),p=page();
   const prevBody=$('ed').querySelector('.m-body'),scroll=prevBody?prevBody.scrollTop:0;
   const tabs=[['content','tabContent'],['countdown','tabCountdown'],['display','tabDisplay'],['data','tabData']];
@@ -529,7 +691,7 @@ function renderEditor(){
     <div class="grid2">
       <div class="field"><span class="flabel">${esc(t('align'))}</span>
         <div class="seg" role="group" aria-label="${esc(t('align'))}">${['left','center','right'].map(v=>`<button data-act="align" data-v="${v}" class="${p.align===v?'on':''}" aria-pressed="${p.align===v}">${esc(t(v))}</button>`).join('')}</div></div>
-      <div class="field"><label for="ed-footer">${esc(t('footer'))}</label>
+      <div class="field"><div class="lbl-row"><label for="ed-footer">${esc(t('footer'))}</label>${info('footer')}</div>
         <input type="text" id="ed-footer" data-f="footer" value="${esc(p.footer)}" placeholder="${esc(t('footerPh'))}"></div>
     </div>
     <div class="group"><h3>${esc(t('thisPage'))}</h3><div class="row-btns">
@@ -544,40 +706,37 @@ function renderEditor(){
       <h3>${esc(t('emptyTitle'))}</h3><p>${esc(t('emptyText'))}</p>
       <button class="btn primary" data-act="addtimer">${esc(t('addCd'))}</button></div>`}
     else{
-    const modeBar=p.timers.length>1?`<div class="modebar"><span class="flabel">${esc(t('modeLbl'))}</span>
-      <div class="seg" role="group" aria-label="${esc(t('modeLbl'))}">${['separate','continuous'].map(v=>`<button data-act="mode" data-v="${v}" class="${(p.mode||'separate')===v?'on':''}" aria-pressed="${(p.mode||'separate')===v}">${esc(t(v==='separate'?'modeSep':'modeCont'))}</button>`).join('')}</div>
-      <span class="hint">${esc(t(p.mode==='continuous'?'modeHintCont':'modeHintSep'))}</span></div>`:'';
+    const modeBar=p.timers.length>1?`<div class="modebar"><span class="flabel lbl-row">${esc(t('modeLbl'))}${info('timing')}</span>
+      <div class="seg" role="group" aria-label="${esc(t('modeLbl'))}">${['separate','continuous'].map(v=>`<button data-act="mode" data-v="${v}" class="${(p.mode||'separate')===v?'on':''}" aria-pressed="${(p.mode||'separate')===v}">${esc(t(v==='separate'?'modeSep':'modeCont'))}</button>`).join('')}</div></div>`:'';
     body=modeBar+`<div class="tgrid">${p.timers.map((x,i)=>`
       <div class="tbox">
         <div class="tb-head"><strong>${esc(t('cdN',{n:i+1}))}</strong><button class="btn small danger" data-act="deltimer" data-i="${i}">${esc(t('remove'))}</button></div>
         <div class="field"><label for="ed-tl-${i}">${esc(t('label'))}</label><input type="text" id="ed-tl-${i}" data-f="tlabel" data-i="${i}" value="${esc(x.label)}"></div>
-        <div class="field"><label for="ed-tm-${i}">${esc(t('minutes'))}</label><input type="number" id="ed-tm-${i}" data-f="tmin" data-i="${i}" min="1" step="1" value="${x.min}"></div>
-        <div class="field"><label class="check"><input type="checkbox" id="ed-tc-${i}" data-f="talert" data-i="${i}"${x.alert?' checked':''}> ${esc(t('blink'))}</label>
-          <div class="inline"><input type="number" id="ed-ta-${i}" data-f="talertmin" data-i="${i}" min="0" step="1" value="${x.alertMin}"${x.alert?'':' disabled'} aria-label="${esc(t('blinkWhen'))}"><span class="hint">${esc(t('blinkWhen'))}</span></div></div>
-        <div class="field"><label for="ed-ts-${i}">${esc(t('sound'))}</label>
+        <div class="field"><div class="lbl-row"><label for="ed-tm-${i}">${esc(t('minutes'))}</label>${info('duration')}</div><input type="number" id="ed-tm-${i}" data-f="tmin" data-i="${i}" min="1" step="1" value="${x.min}" aria-describedby="ed-tm-err-${i}">
+          <p class="ferr" id="ed-tm-err-${i}" role="alert"></p>
+          ${['run','pause','wait'].includes(tstate(x,now()))?`<p class="fnote">${esc(t('durNote'))}</p>`:''}</div>
+        <div class="field"><div class="lbl-row"><label class="check"><input type="checkbox" id="ed-tc-${i}" data-f="talert" data-i="${i}"${x.alert?' checked':''}> ${esc(t('blink'))}</label>${info('blink')}</div>
+          <div class="inline"><input type="number" id="ed-ta-${i}" data-f="talertmin" data-i="${i}" min="0" step="1" value="${x.alertMin}"${x.alert?'':' disabled'} aria-label="${esc(t('blinkWhen'))}" aria-describedby="ed-ta-err-${i}"><span class="hint">${esc(t('blinkWhen'))}</span></div><p class="ferr" id="ed-ta-err-${i}" role="alert"></p></div>
+        <div class="field"><div class="lbl-row"><label for="ed-ts-${i}">${esc(t('sound'))}</label>${info('sound')}</div>
           <div class="inline"><select id="ed-ts-${i}" data-f="tsound" data-i="${i}">${sl.map(s=>`<option value="${esc(s.key)}"${(x.sound||'loceng')===s.key?' selected':''}>${esc(s.name)}</option>`).join('')}</select>
           <button class="btn small" data-act="testsound" data-i="${i}">${esc(t('test'))}</button></div></div>
       </div>`).join('')}
-      ${p.timers.length<3?`<button class="tbox add" data-act="addtimer"><span class="plus" aria-hidden="true">+</span><span>${esc(t('addCd').replace('+ ',''))}</span></button>`:''}</div>
-    <p class="hint">${esc(t('cdHint'))} ${esc(t('blinkHint'))}</p>`;}
+      ${p.timers.length<3?`<button class="tbox add" data-act="addtimer"><span class="plus" aria-hidden="true">+</span><span>${esc(t('addCd').replace('+ ',''))}</span></button>`:''}</div>`;}
   }else if(edTab==='display'){
     body=`
     <div class="grid2">
-      <div class="field"><span class="flabel">${esc(t('language'))}</span>
-        <div class="seg" role="group" aria-label="${esc(t('language'))}"><button data-act="lang" data-lang="en" class="${LANG==='en'?'on':''}">English</button><button data-act="lang" data-lang="ms" class="${LANG==='ms'?'on':''}">Bahasa Melayu</button></div>
-        <p class="hint">${esc(t('langHint'))}</p></div>
-      <div class="field"><label for="ed-clk">${esc(t('clockFmt'))}</label>
+      <div class="field"><span class="flabel lbl-row">${esc(t('language'))}${info('lang')}</span>
+        <div class="seg" role="group" aria-label="${esc(t('language'))}"><button data-act="lang" data-lang="en" class="${LANG==='en'?'on':''}">English</button><button data-act="lang" data-lang="ms" class="${LANG==='ms'?'on':''}">Bahasa Melayu</button></div></div>
+      <div class="field"><div class="lbl-row"><label for="ed-clk">${esc(t('clockFmt'))}</label>${info('clock')}</div>
         <select id="ed-clk" data-f="clock24"><option value="0"${st.clock24?'':' selected'}>${esc(t('h12'))}</option><option value="1"${st.clock24?' selected':''}>${esc(t('h24'))}</option></select></div>
     </div>
     <div class="grid2">
       <div class="field"><label class="check"><input type="checkbox" id="ed-secs" data-f="secs"${st.secs?' checked':''}> ${esc(t('secs'))}</label>
         <label class="check"><input type="checkbox" id="ed-date" data-f="showDate"${st.showDate!==false?' checked':''}> ${esc(t('showDate'))}</label></div>
-      <div class="field"><label for="ed-scale">${esc(t('size'))}: <span id="ed-scalev">${Math.round(st.scale*100)}%</span></label>
+      <div class="field"><div class="lbl-row"><label for="ed-scale">${esc(t('size'))}: <span id="ed-scalev">${Math.round(st.scale*100)}%</span></label>${info('scale')}</div>
         <input type="range" class="peek" id="ed-scale" data-f="scale" min="60" max="150" step="5" value="${Math.round(st.scale*100)}"></div>
     </div>
-    <p class="hint">${esc(db?t('timeHintFb'):t('timeHint'))}</p>
-    <div class="group sizes"><h3>${esc(t('sizesGrp',{n:st.pi+1}))}</h3>
-      <p class="hint">${esc(t('sizesHint'))}</p>
+    <div class="group sizes"><h3 class="lbl-row">${esc(t('sizesGrp',{n:st.pi+1}))}${info('sizes')}</h3>
       <div class="szgrid">${SIZE_KEYS.map(k=>{const v=Math.round(sizes(p)[k]*100);return `
         <div class="sz"><label for="ed-sz-${k}">${esc(t('sz_'+k))}</label>
           <input type="range" class="peek" id="ed-sz-${k}" data-f="size" data-k="${k}" min="60" max="160" step="5" value="${v}">
@@ -587,19 +746,15 @@ function renderEditor(){
   }else{
     const phone=MODE==='display'
       ?(db?`<p>${esc(t('roomCode'))}: <b>${room||'…'}</b></p>
-          <div class="row-btns"><button class="btn small" data-act="pair">${esc(t('showQr'))}</button><button class="btn small" data-act="newroom">${esc(t('newRoom'))}</button></div>
-          <p class="hint">${esc(t('roomHint'))}</p>`:`<p class="hint">${esc(t('noFb'))}</p>`)
+          <div class="row-btns"><button class="btn small" data-act="pair">${esc(t('showQr'))}</button><button class="btn small" data-act="newroom">${esc(t('newRoom'))}</button></div>`:`<p class="hint">${esc(t('noFb'))}</p>`)
       :`<p>${esc(t('roomConnected',{code:room||'-'}))}</p><div class="row-btns"><button class="btn small" data-act="leave">${esc(t('changeRoom'))}</button></div>`;
     body=`
-    <div class="group"><h3>${esc(t('phoneGrp'))}</h3>${phone}</div>
-    <div class="group"><h3>${esc(t('backupGrp'))}</h3>
-      <p class="hint">${esc(t('backupHint'))}</p>
-      <div class="row-btns"><button class="btn small" data-act="export">${esc(t('genCode'))}</button><button class="btn small" data-act="copy">${esc(t('copy'))}</button></div>
-      <textarea id="ed-export" rows="3" readonly aria-label="${esc(t('exportLbl'))}"></textarea>
-      <div class="field"><label for="ed-import">${esc(t('importLbl'))}</label>
-        <textarea id="ed-import" rows="3" placeholder="${esc(t('importPh'))}"></textarea>
-        <input type="file" id="ed-file" accept=".json,.txt,application/json,text/plain" aria-label="${esc(t('importLbl'))}"></div>
-      <div class="row-btns"><button class="btn small primary" data-act="import">${esc(t('importBtn'))}</button></div></div>
+    <div class="group"><h3 class="lbl-row">${esc(t('phoneGrp'))}${info('room')}</h3>${phone}</div>
+    <div class="group"><h3 class="lbl-row">${esc(t('shareGrp'))}${info('share')}</h3>${shareHtml()}</div>
+    <div class="group"><h3 class="lbl-row">${esc(t('takeGrp'))}${info('take')}</h3>${takeHtml()}</div>
+    <div class="group"><h3 class="lbl-row">${esc(t('fileGrp'))}${info('file')}</h3>
+      <div class="row-btns"><button class="btn small" data-act="download">${esc(t('download'))}</button>
+        <input type="file" id="ed-file" class="sr-only" accept=".json,.txt,application/json,text/plain"><label for="ed-file" class="btn small">${esc(t('openFile'))}</label></div></div>
     <div class="group"><h3>${esc(t('helpGrp'))}</h3><div class="row-btns">
       ${MODE==='display'?`<button class="btn small" data-act="tour">${esc(t('tourStart'))}</button>`:''}
       <a class="btn small" href="${BASE}panduan/" target="_blank" rel="noopener">${esc(t('openGuide'))}</a></div></div>
@@ -616,9 +771,21 @@ function renderEditor(){
         <input type="text" id="ed-rename" value="${esc(st.name)}" maxlength="80">
         <button class="btn small primary" data-act="renamesave">${esc(t('save'))}</button>
         <button class="btn small" data-act="renamecancel">${esc(t('cancel'))}</button>`:`
-        <label for="ed-set">${esc(t('sessionLbl'))}</label>
-        <select id="ed-set">${S.sets.map((s,i)=>`<option value="${i}"${i===S.cur?' selected':''}>${esc(s.name)}</option>`).join('')}
-          <option disabled>──────────</option><option value="new">${esc(t('newSession'))}</option></select>
+        <span class="flabel lbl-row"><span id="ed-set-l">${esc(t('sessionLbl'))}</span>${info('session')}</span>
+        <span class="sess-pick">
+          <button class="sess-btn" id="ed-set" data-act="sesslist" aria-haspopup="listbox" aria-expanded="${sessOpen}" aria-labelledby="ed-set-l ed-set-n">
+            <span class="sb-name" id="ed-set-n">${esc(st.name)}</span>
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          ${sessOpen?`<div class="sess-list" role="listbox" aria-labelledby="ed-set-l">
+            ${S.sets.map((s,i)=>`<button class="sl-item${i===S.cur?' on':''}" role="option" aria-selected="${i===S.cur}" data-act="pickset" data-i="${i}">
+              <span class="sl-check" aria-hidden="true">${i===S.cur?'<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</span>
+              <span class="sl-text"><span class="sl-name">${esc(s.name)}</span><span class="sl-meta">${esc(t(s.pages.length===1?'pageCount1':'pagesCount',{n:s.pages.length}))}</span></span>
+            </button>`).join('')}
+            <div class="sl-sep" role="separator"></div>
+            <button class="sl-item sl-new" data-act="newset"><span class="sl-check" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="sl-name">${esc(t('newSession').replace(/^\+\s*/,''))}</span></button>
+          </div>`:''}
+        </span>
         <span class="sess-wrap">
           <button class="icon-btn sess-more" data-act="sessmenu" aria-haspopup="true" aria-expanded="${sessMenu}" aria-label="${esc(t('sessMore'))}">⋯</button>
           ${sessMenu?`<span class="sess-pop" role="menu">
@@ -629,7 +796,7 @@ function renderEditor(){
         </span>`}</div>
       <button class="icon-btn" data-act="close" aria-label="${esc(t('close'))}">✕</button>
     </div>
-    <div class="m-pages">${st.pages.map((pg,i)=>`<button class="chip${i===st.pi?' on':''}" data-act="goto" data-i="${i}">${i+1}. ${esc(pg.title||t('untitled'))}</button>`).join('')}
+    <div class="m-pages"><span class="mp-label lbl-row">${esc(t('pagesLbl'))}${info('page')}</span>${st.pages.map((pg,i)=>`<button class="chip${i===st.pi?' on':''}" data-act="goto" data-i="${i}">${i+1}. ${esc(pg.title||t('untitled'))}</button>`).join('')}
       <button class="chip add" data-act="addpage">${esc(t('addPage'))}</button></div>
     <div class="m-tabs" role="tablist">${tabs.map(([k,l])=>`<button class="m-tab" role="tab" data-act="tab" data-tab="${k}" aria-selected="${edTab===k}">${esc(t(l))}</button>`).join('')}</div>
     <div class="m-body" role="tabpanel">${body}</div>
@@ -638,8 +805,11 @@ function renderEditor(){
   const nb=$('ed').querySelector('.m-body');if(nb)nb.scrollTop=scroll;
 }
 
+function fieldErr(el,id,msg){const m=$(id);if(m)m.textContent=msg;el.toggleAttribute('aria-invalid',!!msg);el.classList.toggle('bad',!!msg)}
 $('ed').addEventListener('input',e=>{
   const el=e.target,f=el.dataset.f,st=set(),p=page(),i=+el.dataset.i;
+  if(el.id==='ed-take'){takeCode=el.value;takeErr('');const c=cleanShare(el.value),f=fmtShare(c);if(el.value!==f&&!/-$/.test(el.value)){el.value=f}return}
+  if(el.dataset.f==='sharesel'){const j=+el.dataset.i;el.checked?shareSel.add(j):shareSel.delete(j);renderEditor();const n=$('ed-sh-'+j);if(n)n.focus();return}
   if(el.id==='ed-set'){if(el.value==='new'){newSession();return}S.cur=+el.value;save();renderStage();renderEditor();return}
   if(!f)return;
   switch(f){
@@ -648,8 +818,8 @@ $('ed').addEventListener('input',e=>{
     case 'notes':p.notes=el.value;break;
     case 'footer':p.footer=el.value;break;
     case 'tlabel':p.timers[i].label=el.value;break;
-    case 'tmin':{const v=parseFloat(el.value);if(v>0)p.timers[i].min=v;break}
-    case 'talertmin':{const v=parseFloat(el.value);if(v>=0)p.timers[i].alertMin=v;break}
+    case 'tmin':{const v=parseFloat(el.value),ok=v>=1;fieldErr(el,'ed-tm-err-'+i,ok?'':t('errMin'));if(ok)p.timers[i].min=v;else return;break}
+    case 'talertmin':{const v=parseFloat(el.value),ok=v>=0;fieldErr(el,'ed-ta-err-'+i,ok?'':t('errZero'));if(ok)p.timers[i].alertMin=v;else return;break}
     case 'talert':{p.timers[i].alert=el.checked;const am=$('ed-ta-'+i);if(am)am.disabled=!el.checked;break}
     case 'tsound':p.timers[i].sound=el.value;playSound(el.value);break;
     case 'clock24':st.clock24=el.value==='1';break;
@@ -665,7 +835,7 @@ $('ed').addEventListener('pointerdown',e=>{if(e.target.matches('input.peek'))$('
 addEventListener('pointerup',endPeek);addEventListener('pointercancel',endPeek);
 $('ed').addEventListener('change',e=>{
   if(e.target.id==='ed-file'&&e.target.files[0]){const r=new FileReader();
-    r.onload=()=>{$('ed-import').value=r.result;flash(t('fileRead'))};r.readAsText(e.target.files[0])}
+    r.onload=()=>{try{const d=JSON.parse(r.result);const list=(Array.isArray(d.sets)?d.sets:[d]).map(normSet);if(!list.length)throw 0;importSets(list)}catch(err){flash(t('badFile'))}};r.readAsText(e.target.files[0]);e.target.value=''}
 });
 
 /* ---------- Phone remote: join a room ---------- */
