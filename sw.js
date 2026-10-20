@@ -1,7 +1,7 @@
 /* AZ=R Countdown service worker: lets the site open without internet and be installed as an app.
    Code (HTML/JS/CSS/JSON) is network-first so updates arrive straight away; media is cache-first.
    Firebase live data is never cached. Bump VERSION when releasing. */
-const VERSION = 'azr-14';
+const VERSION = 'azr-15';
 const CORE = ['./', './index.html', './kawal/', './kawal/index.html', './app.css?v=14', './app.js?v=14', './i18n.js?v=14',
   './firebase-config.js?v=14', './site-config.js?v=14', './favicon.svg', './apple-touch-icon.png', './sounds/sounds.json'];
 const CDN = ['www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com'];
@@ -26,7 +26,9 @@ self.addEventListener('fetch', e => {
 });
 async function networkFirst(req) {
   const c = await caches.open(VERSION);
-  try { const r = await fetch(req); if (r && r.ok) c.put(req, r.clone()); return r; }
+  /* 'no-cache' asks the server whether the file changed (a quick check), so a plain refresh always gets the newest version.
+     A navigation request cannot be copied with options, so fetch it by URL. */
+  try { const r = await fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }); if (r && r.ok) c.put(req, r.clone()); return r; }
   catch (err) { return (await c.match(req)) || (await c.match(req, { ignoreSearch: true })) || (req.mode === 'navigate' ? c.match('./index.html') : Response.error()); }
 }
 async function cacheFirst(req) {
