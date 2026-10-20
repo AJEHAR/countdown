@@ -1,9 +1,9 @@
 /* AZ=R Countdown service worker: lets the site open without internet and be installed as an app.
    Code (HTML/JS/CSS/JSON) is network-first so updates arrive straight away; media is cache-first.
    Firebase live data is never cached. Bump VERSION when releasing. */
-const VERSION = 'azr-13';
-const CORE = ['./', './index.html', './kawal/', './kawal/index.html', './app.css?v=13', './app.js?v=13', './i18n.js?v=13',
-  './firebase-config.js?v=13', './site-config.js?v=13', './favicon.svg', './apple-touch-icon.png', './sounds/sounds.json'];
+const VERSION = 'azr-14';
+const CORE = ['./', './index.html', './kawal/', './kawal/index.html', './app.css?v=14', './app.js?v=14', './i18n.js?v=14',
+  './firebase-config.js?v=14', './site-config.js?v=14', './favicon.svg', './apple-touch-icon.png', './sounds/sounds.json'];
 const CDN = ['www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com'];
 
 self.addEventListener('install', e => {

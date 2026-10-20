@@ -360,7 +360,7 @@ function openPair(){
   $('pair-h').textContent=t('pairTitle');$('pair-close').textContent=t('close');
   if($('pair').hidden)openOverlay('pair');
 }
-function openSettings(){tplOpen=false;renaming=false;sessMenu=false;sessOpen=false;shareForm=false;newShare='';takePreview=null;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
+function openSettings(){tplOpen=false;tplMuet=0;renaming=false;sessMenu=false;sessOpen=false;shareForm=false;newShare='';takePreview=null;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
 function toggleSettings(){settingsOpen()?closeOverlay('ed'):openSettings()}
 
 
@@ -445,18 +445,22 @@ const TEMPLATES=[
     tp(t('tplPaper',{n:2}),t('tplNotes',{a:'09:45',b:'11:15',m:90}),[tm(t('defaultLabel'),90,10)])],footer:t('tplSchoolFooter')})},
   {id:'sections',make:()=>({name:t('tplSectionsName'),pages:[{...tp(t('tplSubject'),t('tplSectionsNotes'),
     [tm(t('s2a'),30,5),tm(t('s2b'),45,5),tm(t('tplCheck'),15,0,'dingdong')]),mode:'continuous'}]})},
-  {id:'muet',make:()=>({name:'MUET',pages:[
-    tp('LISTENING 800/1',t('tplMins',{m:50}),[tm(t('defaultLabel'),50,10)]),
-    tp('READING 800/3',t('tplMins',{m:75}),[tm(t('defaultLabel'),75,15)]),
-    tp('WRITING 800/4',t('tplMins',{m:75}),[tm(t('defaultLabel'),75,15)])],footer:'MUET'})}
+  /* Official MPM timetable for the written papers: Reading, Writing, then Listening, all on one day. */
+  {id:'muet',make:(n=muetGuess())=>{const y=new Date().getFullYear(),f=t('muetFooter',{n,y});return {name:t('muetName',{n,y}),pages:[
+    tp('READING',t('muetNotes',{c:'800/3',a:'08:00',b:'09:15',m:75}),[tm(t('defaultLabel'),75,15)]),
+    tp('WRITING',t('muetNotes',{c:'800/4',a:'10:00',b:'11:15',m:75}),[tm(t('defaultLabel'),75,15)]),
+    tp('LISTENING',t('muetNotes',{c:'800/1',a:'12:00',b:'12:50',m:50}),[tm(t('defaultLabel'),50,10)])],footer:f}}}
 ];
+/* MUET runs three sessions a year (about Mar, Jul, Oct), so suggest the next one by month; the user can change it. */
+function muetGuess(){const m=new Date().getMonth();return m<4?1:m<8?2:3}
+let tplMuet=0;
 function tp(title,notes,timers){return {id:uid(),title,notes,align:'center',footer:'',mode:'separate',timers}}
 function tm(label,min,alertMin,sound='loceng'){return timer(label,min,alertMin>0,alertMin,sound)}
-function newFromTemplate(id){
-  const tpl=TEMPLATES.find(x=>x.id===id);if(!tpl)return;const d=tpl.make();
+function newFromTemplate(id,arg){
+  const tpl=TEMPLATES.find(x=>x.id===id);if(!tpl)return;const d=arg?tpl.make(arg):tpl.make();
   d.pages.forEach(pg=>{if(d.footer)pg.footer=d.footer});
   S.sets.push({id:uid(),name:d.name,clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:d.pages});
-  S.cur=S.sets.length-1;tplOpen=false;sessOpen=false;edTab='content';save();renderStage();renderEditor();flash(t('tplCreated'));track('template-'+id);
+  S.cur=S.sets.length-1;tplOpen=false;tplMuet=0;sessOpen=false;edTab='content';save();renderStage();renderEditor();flash(t('tplCreated'));track('template-'+id);
 }
 function newSession(){
   S.sets.push({id:uid(),name:t('newSessionName'),clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:[blankPage('')]});
@@ -614,8 +618,10 @@ document.addEventListener('click',async e=>{
     case 'leave':disconnect();lsSet(CTLKEY,'');history.replaceState(null,'',location.pathname);closeOverlay('ed');showJoin('');break;
     case 'newset':newSession();break;
     case 'tplopen':tplOpen=true;sessOpen=false;renderEditor();{const f=$('ed').querySelector('.tpl-card');if(f)f.focus()}break;
-    case 'tplclose':tplOpen=false;renderEditor();break;
-    case 'tplpick':newFromTemplate(b.dataset.id);break;
+    case 'tplclose':if(tplMuet){tplMuet=0}else tplOpen=false;renderEditor();break;
+    case 'tplpick':if(b.dataset.id==='muet'){tplMuet=muetGuess();renderEditor();{const f=$('ed').querySelector('.muet-box .seg .on');if(f)f.focus()}}else newFromTemplate(b.dataset.id);break;
+    case 'muetsess':tplMuet=+b.dataset.v;renderEditor();{const f=$('ed').querySelector('.muet-box .seg .on');if(f)f.focus()}break;
+    case 'muetgo':newFromTemplate('muet',tplMuet);break;
     case 'sesslist':sessOpen=!sessOpen;sessMenu=false;renderEditor();if(sessOpen){const f=$('ed').querySelector('.sl-item.on')||$('ed').querySelector('.sl-item');if(f)f.focus()}break;
     case 'pickset':sessOpen=false;S.cur=i;save();renderStage();renderEditor();{const b=$('ed-set');if(b)b.focus()}break;
     case 'sessmenu':sessOpen=false;sessMenu=!sessMenu;renderEditor();if(sessMenu){const f=$('ed').querySelector('.sess-pop .hp-item');if(f)f.focus()}break;
@@ -823,7 +829,15 @@ function renderEditor(){
       <kbd>→</kbd><span>${esc(t('kNext'))}</span><kbd>←</kbd><span>${esc(t('kPrev'))}</span><kbd>F</kbd><span>${esc(t('kFs'))}</span>
       <kbd>S</kbd><span>${esc(t('kStart'))}</span><kbd>P</kbd><span>${esc(t('kPause'))}</span><kbd>E</kbd><span>${esc(t('kSettings'))}</span></div></div>`:''}`;
   }
-  if(tplOpen)body=`<div class="tpl-head"><h3>${esc(t('tplTitle'))}</h3><p class="hint">${esc(t('tplHint'))}</p></div>
+  if(tplOpen&&tplMuet){const y=new Date().getFullYear(),d=TEMPLATES.find(x=>x.id==='muet').make(tplMuet);
+    body=`<div class="tpl-head"><h3>MUET</h3><p class="hint">${esc(t('muetHint'))}</p></div>
+    <div class="muet-box"><div class="field"><span class="flabel">${esc(t('muetSess'))}</span>
+      <div class="seg" role="group" aria-label="${esc(t('muetSess'))}">${[1,2,3].map(n=>`<button data-act="muetsess" data-v="${n}" class="${tplMuet===n?'on':''}" aria-pressed="${tplMuet===n}">${esc(t('muetSessN',{n,y}))}</button>`).join('')}</div></div>
+      <div class="muet-prev">${d.pages.map(pg=>`<div class="mp"><b>${esc(pg.title)}</b><span>${esc(pg.notes).replace(/\n/g,'<br>')}</span></div>`).join('')}</div>
+      <p class="muet-foot">${esc(t('footer'))}: <b>${esc(d.footer)}</b></p>
+      <p class="hint">${esc(t('muetCheck'))}</p></div>
+    <div class="row-btns"><button class="btn small" data-act="tplclose">${esc(t('back'))}</button><button class="btn small primary tpl-go" data-act="muetgo">${esc(t('muetCreate'))}</button></div>`}
+  else if(tplOpen)body=`<div class="tpl-head"><h3>${esc(t('tplTitle'))}</h3><p class="hint">${esc(t('tplHint'))}</p></div>
     <div class="tpl-grid">${TEMPLATES.map(x=>{const d=x.make();return `<button class="tpl-card" data-act="tplpick" data-id="${x.id}">
       <span class="tpl-name">${esc(d.name)}</span><span class="tpl-desc">${esc(t('tplDesc_'+x.id))}</span>
       <span class="tpl-pages">${d.pages.map(pg=>`<span>${esc(pg.title)}<small>${pg.timers.map(z=>z.min+'′').join(' + ')}</small></span>`).join('')}</span></button>`}).join('')}</div>

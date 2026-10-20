@@ -385,3 +385,12 @@ body.present .siteurl{left:clamp(12px,2.2vmin,28px)}
 .tpl-pages span{font-size:.75rem;font-weight:700;background:var(--plate-bg);color:var(--plate-ink);border-radius:999px;padding:.25em .65em;display:inline-flex;gap:6px}
 .tpl-pages small{font-weight:400;opacity:.85}
 @media (max-width:720px){.tpl-grid{grid-template-columns:1fr}}
+
+.muet-box{display:flex;flex-direction:column;gap:14px}
+.muet-prev{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.muet-prev .mp{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;display:flex;flex-direction:column;gap:4px;font-size:.9rem;color:var(--soft);line-height:1.35}
+.muet-prev .mp b{font-family:var(--display,inherit);font-size:1.05rem;color:var(--ink);letter-spacing:.02em}
+.muet-foot{margin:0;font-size:.9rem;color:var(--soft)}
+.muet-foot b{color:var(--ink);letter-spacing:.04em}
+.row-btns .tpl-go{margin-left:auto}
+@media (max-width:560px){.muet-prev{grid-template-columns:1fr}}
