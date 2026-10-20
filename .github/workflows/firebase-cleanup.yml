@@ -1,0 +1,25 @@
+# Weekly clean-up of old rooms and expired share codes in Firebase.
+# Runs every Sunday 03:00 Malaysia time (Saturday 19:00 UTC). Can also be run by hand from the Actions tab.
+name: Firebase clean-up
+on:
+  schedule:
+    - cron: '0 19 * * 6'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list what would be removed (1 = yes)'
+        default: '0'
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-save firebase-admin@12
+      - run: node tools/cleanup.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}

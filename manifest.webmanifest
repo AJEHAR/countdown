@@ -1,0 +1,16 @@
+{
+  "name": "AZ=R Countdown",
+  "short_name": "AZ=R Countdown",
+  "description": "Live clock, notes and up to three countdowns for the exam hall, controlled from your phone.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f0f1",
+  "theme_color": "#a3283a",
+  "lang": "en",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

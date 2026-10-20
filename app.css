@@ -11,11 +11,21 @@
   --scale:1;
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root{
+:root[data-theme="dark"]{
+  --bg:#141115; --surface:#1f1a20; --ink:#efe9eb; --soft:#c9bec3; --muted:#9a8e94; --line:#3a3239;
+  --plate-bg:#3a1a21; --plate-ink:#ff9eaa; --plate-sub:#d99aa4;
+  --panel:#0c0a0d; --card:#1a161b; --card-run:#2d252c; --panel-line:rgba(255,255,255,.12);
+  --alert:#ff4359; --scrim:rgba(0,0,0,.55); --tour-scrim:rgba(0,0,0,.72); --accent:#ff9eaa; --ok:#4cc985; color-scheme:dark}
+@media (prefers-color-scheme: dark){:root[data-theme="auto"]{
   --bg:#141115; --surface:#1f1a20; --ink:#efe9eb; --soft:#c9bec3; --muted:#9a8e94; --line:#3a3239;
   --plate-bg:#3a1a21; --plate-ink:#ff9eaa; --plate-sub:#d99aa4;
   --panel:#0c0a0d; --card:#1a161b; --card-run:#2d252c; --panel-line:rgba(255,255,255,.12);
   --alert:#ff4359; --scrim:rgba(0,0,0,.55); --tour-scrim:rgba(0,0,0,.72); --accent:#ff9eaa; --ok:#4cc985; color-scheme:dark}}
+/* High contrast: grey text becomes solid so it survives a washed-out projector */
+:root[data-contrast="high"]{--soft:var(--ink);--muted:var(--ink);--plate-sub:var(--plate-ink);--panel-muted:#e9e1e5}
+:root[data-contrast="high"] .notes{font-weight:600}
+:root[data-contrast="high"] .footer{opacity:1}
+
 
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
@@ -27,7 +37,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 /* ================= Display ================= */
-.stage{flex:1;min-height:0;display:grid;grid-template-columns:var(--cols,2fr 1fr);gap:clamp(12px,2vmin,28px);padding-block:clamp(12px,2.2vmin,28px)}
+.stage{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:var(--cols,2fr 1fr);gap:clamp(12px,2vmin,28px);padding-block:clamp(12px,2.2vmin,28px)}
 .stage.no-timers{grid-template-columns:1fr}
 .info{min-height:0;display:grid;grid-auto-rows:1fr;gap:clamp(8px,1.6vmin,20px)}
 .row{min-height:0;container-type:size;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
@@ -357,3 +367,21 @@ div.lbl-row{display:flex}
 .clock.tick-off .colon{opacity:0}
 @media (prefers-reduced-motion: reduce){.clock.tick-off .colon{opacity:1}}
 .field .lbl-row>label.check{font-size:.82rem;font-weight:700;color:var(--soft)}
+
+/* Site address mark, bottom-left in the stage padding */
+.siteurl{position:absolute;left:0;bottom:max(2px,calc(clamp(12px,2.2vmin,28px)/2 - .6em));font-size:clamp(10px,1.25vmin,15px);font-weight:700;letter-spacing:.06em;
+  color:var(--muted);opacity:.75;pointer-events:none;line-height:1.2}
+body.present .siteurl{left:clamp(12px,2.2vmin,28px)}
+
+/* Templates */
+.tpl-head h3{margin:0 0 4px;font-family:var(--display);font-size:1.35rem;font-weight:600}
+.tpl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tpl-card{display:flex;flex-direction:column;gap:6px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;cursor:pointer;color:var(--ink)}
+.tpl-card:hover{border-color:var(--plate-ink);background:var(--bg)}
+.tpl-card:focus-visible{outline:3px solid var(--plate-ink);outline-offset:2px}
+.tpl-name{font-family:var(--display);font-weight:700;font-size:1.25rem}
+.tpl-desc{font-size:.85rem;color:var(--soft);line-height:1.45}
+.tpl-pages{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tpl-pages span{font-size:.75rem;font-weight:700;background:var(--plate-bg);color:var(--plate-ink);border-radius:999px;padding:.25em .65em;display:inline-flex;gap:6px}
+.tpl-pages small{font-weight:400;opacity:.85}
+@media (max-width:720px){.tpl-grid{grid-template-columns:1fr}}

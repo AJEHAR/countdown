@@ -20,6 +20,12 @@ const cleanCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,
 
 /* ---------- Language ---------- */
 const DICT=window.I18N||{en:{}};
+/* Theme and contrast belong to the screen, so they are saved per device, not per session. */
+const THEMEKEY='papanMasa.theme',CONTRASTKEY='papanMasa.contrast';
+let THEME=['light','dark','auto'].includes(lsGet(THEMEKEY))?lsGet(THEMEKEY):'light';
+let CONTRAST=lsGet(CONTRASTKEY)==='high';
+function applyLook(){const d=document.documentElement;d.dataset.theme=THEME;if(CONTRAST)d.dataset.contrast='high';else delete d.dataset.contrast}
+applyLook();
 let LANG=lsGet(LANGKEY)==='ms'?'ms':'en';
 function t(k,v){let s=(DICT[LANG]&&DICT[LANG][k])??(DICT.en[k])??k;if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s}
 function applyStatic(){
@@ -54,7 +60,7 @@ function normSet(s){
     align:['left','center','right'].includes(p.align)?p.align:'center',footer:String(p.footer??''),mode:p.mode==='continuous'?'continuous':'separate',sizes:normSizes(p.sizes),
     timers:(Array.isArray(p.timers)?p.timers:[]).slice(0,3).map(x=>({id:uid(),label:String(x.label??''),min:Math.max(.1,+x.min||1),alert:!!x.alert,alertMin:Math.max(0,+x.alertMin||0),sound:validSound(x.sound)?x.sound:'loceng'}))}));
   if(!pages.length)pages.push(blankPage(''));
-  return {id:uid(),name:String(s.name||'Import'),clock24:!!s.clock24,secs:!!s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,scale:Math.min(1.5,Math.max(.6,+s.scale||1)),pi:0,pages};
+  return {id:uid(),name:String(s.name||'Import'),clock24:!!s.clock24,secs:!!s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,showUrl:s.showUrl!==false,scale:Math.min(1.5,Math.max(.6,+s.scale||1)),pi:0,pages};
 }
 const validState=d=>d&&Array.isArray(d.sets)&&d.sets.length&&d.sets.every(s=>s&&Array.isArray(s.pages)&&s.pages.length);
 
@@ -89,10 +95,16 @@ function fmtDate(d){
 let db=null,roomRef=null,room=null,presRef=null,lastJSON='',pushT=null,online=false,ctlCount=0,dispCount=0;
 function store(){try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem(RKEY,JSON.stringify(R))}catch(e){}}
 function save(debounce){store();if(!roomRef)return;clearTimeout(pushT);if(debounce)pushT=setTimeout(push,400);else push()}
+/* rooms/CODE/updated lets the weekly clean-up remove rooms nobody has used for 30 days */
+let lastTouch=0;
+function touchRoom(){if(!roomRef)return;const n=Date.now();if(n-lastTouch<6e5)return;lastTouch=n;
+  const TS=window.firebase&&firebase.database&&firebase.database.ServerValue?firebase.database.ServerValue.TIMESTAMP:n+clockOff;
+  roomRef.child('updated').set(TS).catch(()=>{})}
 function push(){
   pushT=null;if(!roomRef)return;
   const str=JSON.stringify({S,R});if(str===lastJSON)return;lastJSON=str;
   roomRef.child('state').set(str).catch(err=>flash('Firebase: '+(err.code||err.message)));
+  touchRoom();
 }
 function applyRemote(str){
   if(str===lastJSON)return;
@@ -119,7 +131,7 @@ async function connect(code,create){
   let snap;
   try{snap=await ref.child('state').get()}catch(e){return 'error:'+(e.code||e.message)}
   if(!snap.exists()&&!create)return 'missing';
-  room=code;roomRef=ref;
+  room=code;roomRef=ref;lastTouch=0;touchRoom();
   if(snap.exists())applyRemote(snap.val());else push();
   ref.child('state').on('value',s=>{if(s.exists())applyRemote(s.val())});
   presRef=ref.child(MODE==='control'?'ctl':'disp').push();
@@ -165,7 +177,7 @@ function startChain(){const n=now();let cur=n;
     R[x.id]={st:'run',start:cur>n?cur:0,end:cur+dur};cur+=dur;});
 }
 function pauseChain(){const n=now();page().timers.forEach(x=>{const s=tstate(x,n);if(s==='run')pauseT(x);else if(s==='wait')delete R[x.id]})}
-const startAll=()=>{const n=now();if(isChain())startChain();else page().timers.forEach(x=>{if(tstate(x,n)!=='done')startT(x)});save();tick()};
+const startAll=()=>{track('start-all');const n=now();if(isChain())startChain();else page().timers.forEach(x=>{if(tstate(x,n)!=='done')startT(x)});save();tick()};
 const pauseAll=()=>{if(isChain())pauseChain();else page().timers.forEach(pauseT);save();tick()};
 
 /* ---------- Rendering ---------- */
@@ -185,7 +197,8 @@ function renderStage(){
     const weights=hasContent?[z.clock,2]:[1];
     stage.innerHTML=`<section class="info" style="grid-template-rows:${weights.map(w=>`minmax(0,${w}fr)`).join(' ')}">${rows.join('')}</section>`+
       (n?`<aside class="panel" style="--n:${n}" aria-label="${esc(t('countdowns'))}">${p.timers.map(x=>`
-        <div class="tcard" data-tid="${x.id}"><div class="tc-label">${esc(x.label||t('cdN',{n:''}))}</div><div class="tc-digits">--:--</div><div class="tc-sub"></div></div>`).join('')}</aside>`:'');
+        <div class="tcard" data-tid="${x.id}"><div class="tc-label">${esc(x.label||t('cdN',{n:''}))}</div><div class="tc-digits">--:--</div><div class="tc-sub"></div></div>`).join('')}</aside>`:'')+
+      (st.showUrl!==false?`<div class="siteurl" aria-hidden="true">countdown.syazr.com</div>`:'');
     fitContent();
     $('pinfo').innerHTML=`<b>${esc(st.name)}</b> · ${esc(t('pageOf',{a:st.pi+1,b:st.pages.length}))}`;
   }else{
@@ -318,7 +331,7 @@ let uiTimer;
 function setPresent(on){document.body.classList.toggle('present',on);if(on){if(settingsOpen())closeOverlay('ed');pokeUI();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}}
 function pokeUI(){document.body.classList.add('ui-on');clearTimeout(uiTimer);uiTimer=setTimeout(()=>document.body.classList.remove('ui-on'),2500)}
-function toggleFS(){
+function toggleFS(){track('fullscreen');
   if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return}
   if(document.body.classList.contains('present')){setPresent(false);return}
   let pr;try{pr=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(e){}
@@ -347,7 +360,7 @@ function openPair(){
   $('pair-h').textContent=t('pairTitle');$('pair-close').textContent=t('close');
   if($('pair').hidden)openOverlay('pair');
 }
-function openSettings(){renaming=false;sessMenu=false;sessOpen=false;shareForm=false;newShare='';takePreview=null;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
+function openSettings(){tplOpen=false;renaming=false;sessMenu=false;sessOpen=false;shareForm=false;newShare='';takePreview=null;renderEditor();openOverlay('ed');setTimeout(()=>{const f=$('ed').querySelector('.m-tab[aria-selected="true"]');if(f)f.focus({preventScroll:true})},200)}
 function toggleSettings(){settingsOpen()?closeOverlay('ed'):openSettings()}
 
 
@@ -424,6 +437,27 @@ function endTour(){
 }
 addEventListener('resize',()=>placeTour());
 
+/* Session templates: a ready structure the user only adjusts. Durations for MUET follow the published format (2021 onward). */
+const TEMPLATES=[
+  {id:'single',make:()=>({name:t('tplSingleName'),pages:[tp(t('tplSubject'),t('tplSingleNotes'),[tm(t('defaultLabel'),60,10)])]})},
+  {id:'school',make:()=>({name:t('tplSchoolName'),pages:[
+    tp(t('tplPaper',{n:1}),t('tplNotes',{a:'08:00',b:'09:15',m:75}),[tm(t('defaultLabel'),75,10)]),
+    tp(t('tplPaper',{n:2}),t('tplNotes',{a:'09:45',b:'11:15',m:90}),[tm(t('defaultLabel'),90,10)])],footer:t('tplSchoolFooter')})},
+  {id:'sections',make:()=>({name:t('tplSectionsName'),pages:[{...tp(t('tplSubject'),t('tplSectionsNotes'),
+    [tm(t('s2a'),30,5),tm(t('s2b'),45,5),tm(t('tplCheck'),15,0,'dingdong')]),mode:'continuous'}]})},
+  {id:'muet',make:()=>({name:'MUET',pages:[
+    tp('LISTENING 800/1',t('tplMins',{m:50}),[tm(t('defaultLabel'),50,10)]),
+    tp('READING 800/3',t('tplMins',{m:75}),[tm(t('defaultLabel'),75,15)]),
+    tp('WRITING 800/4',t('tplMins',{m:75}),[tm(t('defaultLabel'),75,15)])],footer:'MUET'})}
+];
+function tp(title,notes,timers){return {id:uid(),title,notes,align:'center',footer:'',mode:'separate',timers}}
+function tm(label,min,alertMin,sound='loceng'){return timer(label,min,alertMin>0,alertMin,sound)}
+function newFromTemplate(id){
+  const tpl=TEMPLATES.find(x=>x.id===id);if(!tpl)return;const d=tpl.make();
+  d.pages.forEach(pg=>{if(d.footer)pg.footer=d.footer});
+  S.sets.push({id:uid(),name:d.name,clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:d.pages});
+  S.cur=S.sets.length-1;tplOpen=false;sessOpen=false;edTab='content';save();renderStage();renderEditor();flash(t('tplCreated'));track('template-'+id);
+}
 function newSession(){
   S.sets.push({id:uid(),name:t('newSessionName'),clock24:false,secs:false,showDate:true,scale:1,pi:0,pages:[blankPage('')]});
   S.cur=S.sets.length-1;sessMenu=false;sessOpen=false;edTab='content';save();renderStage();renaming=true;renderEditor();
@@ -436,10 +470,10 @@ function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();r
   const old=btn.textContent;btn.dataset.armed='1';btn.textContent=t(key||'armDelete');
   setTimeout(()=>{if(btn.isConnected&&btn.dataset.armed){delete btn.dataset.armed;btn.textContent=old}},3000)}
 function flash(s){const m=$('ed-msg');if(m){m.textContent=s;m.className='msg';clearTimeout(flash.t);flash.t=setTimeout(()=>{if(m.isConnected){m.textContent=t('saved');m.className=''}},4000)}}
-function exportObj(list){return {app:'papan-masa',v:2,sets:list.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,scale:s.scale,
+function exportObj(list){return {app:'papan-masa',v:2,sets:list.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,showUrl:s.showUrl!==false,scale:s.scale,
   pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',sizes:sizes(p),timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))}}
 const exportCode=()=>JSON.stringify(exportObj(S.sets));
-let edTab='content',renaming=false,sessMenu=false,sessOpen=false;
+let edTab='content',renaming=false,sessMenu=false,sessOpen=false,tplOpen=false;
 /* ---------- Share codes ----------
    A share code (XXXX-XXXX) points to a copy of chosen sessions stored in Firebase under shares/CODE.
    Firebase rules refuse reads after the expiry time or once cancelled. Cancelling needs the secret
@@ -468,7 +502,7 @@ async function createShare(){
     try{
       await db.ref().update({['shares/'+code]:{data:payload,exp,created},['shareOwners/'+code+'/'+secret]:true});
       const mine=loadShares();mine.unshift({code,secret,exp,created,names:list.map(s=>s.name)});saveShares(mine);
-      shareForm=false;newShare=code;renderEditor();flash(t('shareMade'));return;
+      shareForm=false;newShare=code;renderEditor();flash(t('shareMade'));track('share-created');return;
     }catch(e){if(!/permission/i.test(String(e&&(e.code||e.message))))break}
   }
   if(btn){btn.disabled=false;btn.textContent=t('shareCreate')}
@@ -565,9 +599,11 @@ document.addEventListener('click',async e=>{
     case 'closepair':closeOverlay('pair');break;
     case 'edit':toggleSettings();break;
     case 'close':closeOverlay('ed');break;
+    case 'theme':THEME=b.dataset.v;lsSet(THEMEKEY,THEME);applyLook();renderEditor();break;
     case 'tip':if(tipBtn===b&&tipPinned)hideTip();else showTip(b,true);break;
     case 'help':toggleHelp();break;
     case 'tour':startTour();break;
+    case 'install':closeHelp();if(installEvt){installEvt.prompt();installEvt.userChoice.finally(()=>{installEvt=null;const x=$('b-install');if(x)x.hidden=true})}break;
     case 'tournext':moveTour(1);break;
     case 'tourprev':moveTour(-1);break;
     case 'tourend':endTour();break;
@@ -577,6 +613,9 @@ document.addEventListener('click',async e=>{
     case 'newroom':{const c=genCode();lsSet(ROOMKEY,c);flash(t('newRoomMsg'));await connect(c,true);renderEditor();closeOverlay('ed');openPair();break}
     case 'leave':disconnect();lsSet(CTLKEY,'');history.replaceState(null,'',location.pathname);closeOverlay('ed');showJoin('');break;
     case 'newset':newSession();break;
+    case 'tplopen':tplOpen=true;sessOpen=false;renderEditor();{const f=$('ed').querySelector('.tpl-card');if(f)f.focus()}break;
+    case 'tplclose':tplOpen=false;renderEditor();break;
+    case 'tplpick':newFromTemplate(b.dataset.id);break;
     case 'sesslist':sessOpen=!sessOpen;sessMenu=false;renderEditor();if(sessOpen){const f=$('ed').querySelector('.sl-item.on')||$('ed').querySelector('.sl-item');if(f)f.focus()}break;
     case 'pickset':sessOpen=false;S.cur=i;save();renderStage();renderEditor();{const b=$('ed-set');if(b)b.focus()}break;
     case 'sessmenu':sessOpen=false;sessMenu=!sessMenu;renderEditor();if(sessMenu){const f=$('ed').querySelector('.sess-pop .hp-item');if(f)f.focus()}break;
@@ -610,7 +649,7 @@ document.addEventListener('click',async e=>{
       try{navigator.clipboard.writeText(c).then(ok,()=>flash(c))}catch(err){flash(c)}break}
     case 'sharerevoke':armed(b,()=>revokeShare(b.dataset.code),'armConfirm');break;
     case 'takecheck':checkShare();break;
-    case 'takeimport':if(takePreview){const l=takePreview.sets;takePreview=null;takeCode='';importSets(l)}break;
+    case 'takeimport':if(takePreview){track('share-taken');const l=takePreview.sets;takePreview=null;takeCode='';importSets(l)}break;
     case 'takecancel':takePreview=null;takeCode='';renderEditor();break;
     case 'download':downloadCopy();break;
     case 'import':{const txt=$('ed-import').value.trim();if(!txt){flash(t('pasteFirst'));break}
@@ -659,7 +698,7 @@ document.addEventListener('keydown',e=>{
 /* ---------- Info tooltips (ⓘ) ----------
    Hover or focus shows a short explanation; tap/click pins it (phones have no hover). Esc or a click elsewhere closes it. */
 const TIP_LINK={session:'sessions',page:'sessions',footer:'content',duration:'countdowns',timing:'timing',blink:'countdowns',sound:'sound',
-  lang:'display-options',clock:'help',scale:'display-options',sizes:'display-options',colon:'display-options',room:'phone',share:'after',take:'after',file:'after'};
+  lang:'display-options',clock:'help',scale:'display-options',sizes:'display-options',colon:'display-options',theme:'display-options',contrast:'display-options',url:'display-options',room:'phone',share:'after',take:'after',file:'after'};
 function info(k){return `<button type="button" class="tip-btn" data-act="tip" data-tip="${k}" aria-label="${esc(t('moreInfo'))}" aria-expanded="false"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.3v3.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="4.9" r="1" fill="currentColor"/></svg></button>`}
 let tipEl=null,tipBtn=null,tipPinned=false,tipHideT=null,tipQuiet=false;
 function showTip(btn,pin){
@@ -745,6 +784,13 @@ function renderEditor(){
         <select id="ed-clk" data-f="clock24"><option value="0"${st.clock24?'':' selected'}>${esc(t('h12'))}</option><option value="1"${st.clock24?' selected':''}>${esc(t('h24'))}</option></select></div>
     </div>
     <div class="grid2">
+      <div class="field"><span class="flabel lbl-row">${esc(t('theme'))}${info('theme')}</span>
+        <div class="seg" role="group" aria-label="${esc(t('theme'))}">${[['light','themeLight'],['dark','themeDark'],['auto','themeAuto']].map(([v,l])=>`<button data-act="theme" data-v="${v}" class="${THEME===v?'on':''}" aria-pressed="${THEME===v}">${esc(t(l))}</button>`).join('')}</div></div>
+      <div class="field"><span class="flabel">&nbsp;</span>
+        <div class="lbl-row"><label class="check"><input type="checkbox" id="ed-contrast" data-f="contrast"${CONTRAST?' checked':''}> ${esc(t('contrast'))}</label>${info('contrast')}</div>
+        <div class="lbl-row"><label class="check"><input type="checkbox" id="ed-url" data-f="showUrl"${st.showUrl!==false?' checked':''}> ${esc(t('showUrl'))}</label>${info('url')}</div></div>
+    </div>
+    <div class="grid2">
       <div class="field"><label class="check"><input type="checkbox" id="ed-secs" data-f="secs"${st.secs?' checked':''}> ${esc(t('secs'))}</label>
         <label class="check"><input type="checkbox" id="ed-date" data-f="showDate"${st.showDate!==false?' checked':''}> ${esc(t('showDate'))}</label>
         <div class="lbl-row"><label class="check"><input type="checkbox" id="ed-colon" data-f="blinkColon"${st.blinkColon!==false?' checked':''}> ${esc(t('blinkColon'))}</label>${info('colon')}</div></div>
@@ -777,6 +823,11 @@ function renderEditor(){
       <kbd>→</kbd><span>${esc(t('kNext'))}</span><kbd>←</kbd><span>${esc(t('kPrev'))}</span><kbd>F</kbd><span>${esc(t('kFs'))}</span>
       <kbd>S</kbd><span>${esc(t('kStart'))}</span><kbd>P</kbd><span>${esc(t('kPause'))}</span><kbd>E</kbd><span>${esc(t('kSettings'))}</span></div></div>`:''}`;
   }
+  if(tplOpen)body=`<div class="tpl-head"><h3>${esc(t('tplTitle'))}</h3><p class="hint">${esc(t('tplHint'))}</p></div>
+    <div class="tpl-grid">${TEMPLATES.map(x=>{const d=x.make();return `<button class="tpl-card" data-act="tplpick" data-id="${x.id}">
+      <span class="tpl-name">${esc(d.name)}</span><span class="tpl-desc">${esc(t('tplDesc_'+x.id))}</span>
+      <span class="tpl-pages">${d.pages.map(pg=>`<span>${esc(pg.title)}<small>${pg.timers.map(z=>z.min+'′').join(' + ')}</small></span>`).join('')}</span></button>`}).join('')}</div>
+    <div class="row-btns"><button class="btn small" data-act="tplclose">${esc(t('cancel'))}</button></div>`;
   $('ed').innerHTML=`
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ed-h">
     <div class="m-head">
@@ -799,6 +850,7 @@ function renderEditor(){
             </button>`).join('')}
             <div class="sl-sep" role="separator"></div>
             <button class="sl-item sl-new" data-act="newset"><span class="sl-check" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="sl-name">${esc(t('newSession').replace(/^\+\s*/,''))}</span></button>
+            <button class="sl-item sl-new" data-act="tplopen"><span class="sl-check" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><rect x="2.5" y="2.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 6.5h11M6.5 6.5v7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span><span class="sl-name">${esc(t('fromTemplate'))}</span></button>
           </div>`:''}
         </span>
         <span class="sess-wrap">
@@ -841,6 +893,8 @@ $('ed').addEventListener('input',e=>{
     case 'secs':st.secs=el.checked;break;
     case 'showDate':st.showDate=el.checked;break;
     case 'blinkColon':st.blinkColon=el.checked;break;
+    case 'showUrl':st.showUrl=el.checked;break;
+    case 'contrast':CONTRAST=el.checked;lsSet(CONTRASTKEY,CONTRAST?'high':'');applyLook();requestAnimationFrame(fitContent);return;
     case 'scale':st.scale=+el.value/100;$('ed-scalev').textContent=el.value+'%';break;
     case 'size':{const k=el.dataset.k;p.sizes=normSizes(p.sizes);p.sizes[k]=+el.value/100;const o=$('ed-szv-'+k);if(o)o.textContent=el.value+'%';break}
   }
@@ -867,6 +921,17 @@ async function join(code){
   $('k-joinform').hidden=true;$('k-main').hidden=false;$('k-room').textContent=t('room',{code});
   renderStage();
 }
+
+/* ---------- Installable app ---------- */
+let installEvt=null;
+if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register(BASE+'sw.js').catch(()=>{})})}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;const b=$('b-install');if(b)b.hidden=false});
+addEventListener('appinstalled',()=>{installEvt=null;const b=$('b-install');if(b)b.hidden=true;track('installed')});
+
+/* ---------- Privacy-friendly statistics (GoatCounter, only when configured in site-config.js) ---------- */
+function track(name){try{if(window.goatcounter&&goatcounter.count)goatcounter.count({path:'event/'+name,title:name,event:true})}catch(e){}}
+(function(){const c=(window.SITE_CONFIG||{}).goatcounter;if(!c||!/^[a-z0-9-]+$/i.test(c))return;
+  const s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.dataset.goatcounter='https://'+c+'.goatcounter.com/count';document.head.appendChild(s)})();
 
 /* ---------- Start ---------- */
 applyStatic();
