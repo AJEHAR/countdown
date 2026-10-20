@@ -54,7 +54,7 @@ function normSet(s){
     align:['left','center','right'].includes(p.align)?p.align:'center',footer:String(p.footer??''),mode:p.mode==='continuous'?'continuous':'separate',sizes:normSizes(p.sizes),
     timers:(Array.isArray(p.timers)?p.timers:[]).slice(0,3).map(x=>({id:uid(),label:String(x.label??''),min:Math.max(.1,+x.min||1),alert:!!x.alert,alertMin:Math.max(0,+x.alertMin||0),sound:validSound(x.sound)?x.sound:'loceng'}))}));
   if(!pages.length)pages.push(blankPage(''));
-  return {id:uid(),name:String(s.name||'Import'),clock24:!!s.clock24,secs:!!s.secs,showDate:s.showDate!==false,scale:Math.min(1.5,Math.max(.6,+s.scale||1)),pi:0,pages};
+  return {id:uid(),name:String(s.name||'Import'),clock24:!!s.clock24,secs:!!s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,scale:Math.min(1.5,Math.max(.6,+s.scale||1)),pi:0,pages};
 }
 const validState=d=>d&&Array.isArray(d.sets)&&d.sets.length&&d.sets.every(s=>s&&Array.isArray(s.pages)&&s.pages.length);
 
@@ -177,15 +177,16 @@ function renderStage(){
     const shrink=v=>Math.min(v,1);
     [['--k-clock',shrink(z.clock)],['--k-date',z.date],['--k-title',shrink(z.title)],['--k-notes',shrink(z.notes)],['--k-footer',z.footer],['--k-cd',shrink(z.cd)]]
       .forEach(([k,v])=>stage.style.setProperty(k,v));
-    stage.style.setProperty('--w-title',Math.max(z.title,1));stage.style.setProperty('--w-notes',Math.max(z.notes,1));
     stage.style.setProperty('--cols',`2fr ${z.cd}fr`);stage.style.setProperty('--prows',`3fr ${2*z.cd}fr`);
-    const weights=[z.clock];
     const rows=[`<div class="row r-clock"><div class="plate"><div class="clock" id="clock"></div>${st.showDate!==false?'<div class="date" id="date"></div>':''}</div></div>`];
-    if(p.title){weights.push(z.title);rows.push(`<div class="row r-title"><h1 class="title">${esc(p.title)}</h1></div>`)}
-    if(p.notes||p.footer){weights.push(p.notes?z.notes:Math.max(.5,z.footer*.5));rows.push(`<div class="row r-notes">${p.notes?`<div class="notes" style="text-align:${p.align}">${esc(p.notes)}</div>`:''}${p.footer?`<div class="footer">${esc(p.footer)}</div>`:''}</div>`)}
+    /* Title, notes and footer read as one group: one box, centred together, spaced by type size. fitContent() sizes the text. */
+    const hasContent=!!(p.title||p.notes||p.footer);
+    if(hasContent)rows.push(`<div class="row r-content"><div class="content" id="content">${p.title?`<h1 class="title">${esc(p.title)}</h1>`:''}${p.notes?`<div class="notes" style="text-align:${p.align}">${esc(p.notes)}</div>`:''}${p.footer?`<div class="footer">${esc(p.footer)}</div>`:''}</div></div>`);
+    const weights=hasContent?[z.clock,2]:[1];
     stage.innerHTML=`<section class="info" style="grid-template-rows:${weights.map(w=>`minmax(0,${w}fr)`).join(' ')}">${rows.join('')}</section>`+
       (n?`<aside class="panel" style="--n:${n}" aria-label="${esc(t('countdowns'))}">${p.timers.map(x=>`
         <div class="tcard" data-tid="${x.id}"><div class="tc-label">${esc(x.label||t('cdN',{n:''}))}</div><div class="tc-digits">--:--</div><div class="tc-sub"></div></div>`).join('')}</aside>`:'');
+    fitContent();
     $('pinfo').innerHTML=`<b>${esc(st.name)}</b> · ${esc(t('pageOf',{a:st.pi+1,b:st.pages.length}))}`;
   }else{
     $('k-title').textContent=p.title||t('untitled');
@@ -214,9 +215,22 @@ function subText(x,s,st){
   if(s==='wait')return t('startsAt',{t:fmtClock(new Date(R[x.id].start),st,false)});
   return t('st_'+s);
 }
+/* Size title, notes and footer from the box height, then shrink all three together until the group fits. */
+function fitContent(){
+  const box=document.querySelector('.r-content'),c=$('content');if(!box||!c)return;
+  const H=box.clientHeight,W=box.clientWidth;if(!H||!W)return;
+  const z=sizes(page()),tl=c.querySelector('.title'),nt=c.querySelector('.notes'),ft=c.querySelector('.footer');
+  const base={title:.2*z.title,notes:.085*z.notes,footer:.04*z.footer};
+  let k=set().scale;
+  const apply=()=>{if(tl)tl.style.fontSize=(H*base.title*k).toFixed(2)+'px';if(nt)nt.style.fontSize=(H*base.notes*k).toFixed(2)+'px';if(ft)ft.style.fontSize=(H*base.footer*k).toFixed(2)+'px'};
+  apply();
+  for(let i=0;i<60&&(c.offsetHeight>H+1||c.scrollWidth>W+1);i++){k*=.95;apply()}
+}
+if(MODE==='display'){addEventListener('resize',()=>fitContent());try{document.fonts&&document.fonts.ready.then(()=>fitContent())}catch(e){}}
 function tick(){
   const n=now(),d=new Date(n),st=set();
-  const c=$('clock');if(c){const v=fmtClock(d,st,st.secs);if(c.textContent!==v)c.textContent=v}
+  const c=$('clock');if(c){const v=fmtClock(d,st,st.secs);if(c.dataset.v!==v){c.dataset.v=v;c.innerHTML=esc(v).replace(/:/g,'<span class="colon">:</span>')}
+    c.classList.toggle('tick-off',st.blinkColon!==false&&d.getMilliseconds()>=500)}
   const dt=$('date');if(dt){const v=fmtDate(d);if(dt.textContent!==v)dt.textContent=v}
   page().timers.forEach(x=>{
     const el=document.querySelector(`[data-tid="${x.id}"].tcard, [data-tid="${x.id}"].timer`);if(!el)return;
@@ -422,7 +436,7 @@ function armed(btn,fn,key){if(btn.dataset.armed){delete btn.dataset.armed;fn();r
   const old=btn.textContent;btn.dataset.armed='1';btn.textContent=t(key||'armDelete');
   setTimeout(()=>{if(btn.isConnected&&btn.dataset.armed){delete btn.dataset.armed;btn.textContent=old}},3000)}
 function flash(s){const m=$('ed-msg');if(m){m.textContent=s;m.className='msg';clearTimeout(flash.t);flash.t=setTimeout(()=>{if(m.isConnected){m.textContent=t('saved');m.className=''}},4000)}}
-function exportObj(list){return {app:'papan-masa',v:2,sets:list.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,scale:s.scale,
+function exportObj(list){return {app:'papan-masa',v:2,sets:list.map(s=>({name:s.name,clock24:s.clock24,secs:s.secs,showDate:s.showDate!==false,blinkColon:s.blinkColon!==false,scale:s.scale,
   pages:s.pages.map(p=>({title:p.title,notes:p.notes,align:p.align,footer:p.footer,mode:p.mode||'separate',sizes:sizes(p),timers:p.timers.map(x=>({label:x.label,min:x.min,alert:x.alert,alertMin:x.alertMin,sound:x.sound||'loceng'}))}))}))}}
 const exportCode=()=>JSON.stringify(exportObj(S.sets));
 let edTab='content',renaming=false,sessMenu=false,sessOpen=false;
@@ -645,7 +659,7 @@ document.addEventListener('keydown',e=>{
 /* ---------- Info tooltips (ⓘ) ----------
    Hover or focus shows a short explanation; tap/click pins it (phones have no hover). Esc or a click elsewhere closes it. */
 const TIP_LINK={session:'sessions',page:'sessions',footer:'content',duration:'countdowns',timing:'timing',blink:'countdowns',sound:'sound',
-  lang:'display-options',clock:'help',scale:'display-options',sizes:'display-options',room:'phone',share:'after',take:'after',file:'after'};
+  lang:'display-options',clock:'help',scale:'display-options',sizes:'display-options',colon:'display-options',room:'phone',share:'after',take:'after',file:'after'};
 function info(k){return `<button type="button" class="tip-btn" data-act="tip" data-tip="${k}" aria-label="${esc(t('moreInfo'))}" aria-expanded="false"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.3v3.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="4.9" r="1" fill="currentColor"/></svg></button>`}
 let tipEl=null,tipBtn=null,tipPinned=false,tipHideT=null,tipQuiet=false;
 function showTip(btn,pin){
@@ -732,7 +746,8 @@ function renderEditor(){
     </div>
     <div class="grid2">
       <div class="field"><label class="check"><input type="checkbox" id="ed-secs" data-f="secs"${st.secs?' checked':''}> ${esc(t('secs'))}</label>
-        <label class="check"><input type="checkbox" id="ed-date" data-f="showDate"${st.showDate!==false?' checked':''}> ${esc(t('showDate'))}</label></div>
+        <label class="check"><input type="checkbox" id="ed-date" data-f="showDate"${st.showDate!==false?' checked':''}> ${esc(t('showDate'))}</label>
+        <div class="lbl-row"><label class="check"><input type="checkbox" id="ed-colon" data-f="blinkColon"${st.blinkColon!==false?' checked':''}> ${esc(t('blinkColon'))}</label>${info('colon')}</div></div>
       <div class="field"><div class="lbl-row"><label for="ed-scale">${esc(t('size'))}: <span id="ed-scalev">${Math.round(st.scale*100)}%</span></label>${info('scale')}</div>
         <input type="range" class="peek" id="ed-scale" data-f="scale" min="60" max="150" step="5" value="${Math.round(st.scale*100)}"></div>
     </div>
@@ -825,6 +840,7 @@ $('ed').addEventListener('input',e=>{
     case 'clock24':st.clock24=el.value==='1';break;
     case 'secs':st.secs=el.checked;break;
     case 'showDate':st.showDate=el.checked;break;
+    case 'blinkColon':st.blinkColon=el.checked;break;
     case 'scale':st.scale=+el.value/100;$('ed-scalev').textContent=el.value+'%';break;
     case 'size':{const k=el.dataset.k;p.sizes=normSizes(p.sizes);p.sizes[k]=+el.value/100;const o=$('ed-szv-'+k);if(o)o.textContent=el.value+'%';break}
   }

@@ -39,11 +39,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .date{font-weight:700;color:var(--plate-sub);letter-spacing:.04em;font-size:calc(min(11cqh,3.4cqw)*var(--scale)*var(--k-date,1))}
 
 .title{margin:0;font-family:var(--display);font-weight:600;line-height:1.02;text-wrap:balance;letter-spacing:.01em;max-width:100%;
-  overflow-wrap:anywhere;font-size:calc(min(34cqh,8cqw*var(--w-title,1))*var(--scale)*var(--k-title,1))}
-.r-notes{gap:3cqh}
+  overflow-wrap:anywhere}
 .notes{white-space:pre-line;width:100%;line-height:1.2;font-family:var(--display);font-weight:500;color:var(--soft);overflow-wrap:anywhere;
-  font-size:calc(min(15cqh,4.2cqw*var(--w-notes,1))*var(--scale)*var(--k-notes,1))}
-.footer{color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:calc(min(8cqh,2cqw)*var(--scale)*var(--k-footer,1))}
+}
+.footer{color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.content{width:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
+.content .title:not(:last-child){margin-bottom:.24em}
+.content .title+.footer{margin-top:.6em}
+.content .notes+.footer{margin-top:1.6em}
 
 .panel{min-height:0;background:var(--panel);border-radius:clamp(14px,2.4vmin,28px);padding:clamp(10px,1.6vmin,20px);
   display:grid;grid-template-rows:repeat(var(--n,1),minmax(0,1fr));gap:clamp(8px,1.4vmin,16px)}
@@ -348,3 +351,9 @@ div.lbl-row{display:flex}
 @media (max-width:720px){.mc-names{max-width:60vw}}
 .sharebox .seg button{white-space:nowrap}
 @media (max-width:720px){.sharebox .seg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%}.sharebox .seg button{padding:.5em .2em;font-size:.82rem}}
+
+/* Live clock: the colon blinks once a second */
+.clock .colon{transition:opacity .12s ease}
+.clock.tick-off .colon{opacity:0}
+@media (prefers-reduced-motion: reduce){.clock.tick-off .colon{opacity:1}}
+.field .lbl-row>label.check{font-size:.82rem;font-weight:700;color:var(--soft)}

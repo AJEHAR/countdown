@@ -92,6 +92,7 @@ en:{
   i_share:'Gives other teachers a copy of the sessions you choose. They type the code on their own computer. The copy is not linked, so later changes on either side do not affect the other.',
   i_take:'Type a share code from another teacher. You will see what it contains before adding it. Your own sessions are not changed.',
   i_file:'Saves all your sessions as a file you can keep, email or put in Google Drive. Open the file later to add the sessions back. Works without internet.',
+  blinkColon:'Blink the clock colon', i_colon:'The colon in the clock blinks once a second, so everyone can see the clock is running. Turn it off if it distracts candidates.',
   snd_loceng:'School bell', snd_dingdong:'Ding-dong', snd_bip:'Three beeps', snd_gong:'Gong', snd_penggera:'Alarm', snd_none:'No sound'
 },
 ms:{
@@ -186,5 +187,6 @@ ms:{
   i_share:'Beri salinan sesi pilihan anda kepada guru lain. Mereka taip kod di komputer mereka sendiri. Salinan tidak bersambung, jadi perubahan kemudian di mana-mana pihak tidak menjejaskan pihak lain.',
   i_take:'Taip kod kongsi daripada guru lain. Anda akan nampak isinya sebelum menambahnya. Sesi anda sendiri tidak berubah.',
   i_file:'Menyimpan semua sesi anda sebagai fail yang boleh disimpan, dihantar melalui e-mel atau diletak di Google Drive. Buka fail itu kemudian untuk menambah semula sesi. Berfungsi tanpa internet.',
+  blinkColon:'Titik dua jam berkelip', i_colon:'Titik dua pada jam berkelip sekali setiap saat, supaya semua orang nampak jam sedang berjalan. Matikan jika ia mengganggu calon.',
   snd_loceng:'Loceng sekolah', snd_dingdong:'Ding-dong', snd_bip:'Bip 3 kali', snd_gong:'Gong', snd_penggera:'Penggera', snd_none:'Tiada bunyi'
 }};
